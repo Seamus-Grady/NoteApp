@@ -14,22 +14,21 @@ import android.text.style.ImageSpan;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.net.Uri;
 import android.database.Cursor;
-import android.widget.TextView;
 
 public class PageActivity extends AppCompatActivity {
 
     private static int resultLoadImage = 1;
     private EditText editText;
+    private String pageTitle = "Example Note";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        this.setTitle(pageTitle);
+        setContentView(R.layout.activity_page);
         editText = findViewById(R.id.editText);
         editText.addTextChangedListener(new TextWatcher() {
             @Override
