@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.Editable;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -15,13 +16,17 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import java.util.ArrayList;
 
 public class NoteBookPages extends AppCompatActivity {
 
     private ListView listView;
     private EditText editText;
+    public ArrayList<Editable> noteBookPages = new ArrayList<Editable>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +34,8 @@ public class NoteBookPages extends AppCompatActivity {
         setContentView(R.layout.activity_note_book_pages);
         listView = findViewById(R.id.noteBookPages);
         editText = findViewById(R.id.noteBookName);
+        ArrayAdapter arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPages);
+        listView.setAdapter(arrayAdapter);
 
         editText.setOnTouchListener(new View.OnTouchListener()
         {
@@ -68,6 +75,8 @@ public class NoteBookPages extends AppCompatActivity {
         {
             case R.id.Save:
                 this.setTitle(editText.getText().toString());
+                NoteBookActivity.noteBooks.add(editText.getText().toString());
+                NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                 findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
                 hideAKeyboard(this);
                 return true;

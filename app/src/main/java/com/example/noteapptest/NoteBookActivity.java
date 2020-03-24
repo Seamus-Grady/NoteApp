@@ -15,16 +15,18 @@ import java.util.ArrayList;
 
 public class NoteBookActivity extends AppCompatActivity {
 
-    ArrayList<String> noteBooks = new ArrayList<String>();
+    public static ArrayList<String> noteBooks = new ArrayList<String>();
+    static ArrayAdapter arrayAdapter;
+    private ListView listView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_book);
 
-        ListView listView = findViewById(R.id.listView);
+        listView = findViewById(R.id.listView);
 
-        ArrayAdapter arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBooks);
+        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBooks);
 
         listView.setAdapter(arrayAdapter);
     }
