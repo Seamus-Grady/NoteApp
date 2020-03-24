@@ -21,7 +21,7 @@ import android.net.Uri;
 import android.database.Cursor;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity {
+public class PageActivity extends AppCompatActivity {
 
     private static int resultLoadImage = 1;
     private EditText editText;
