@@ -2,21 +2,27 @@ package com.example.noteapptest;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.text.style.ImageSpan;
+import android.text.util.Linkify;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.net.Uri;
 import android.database.Cursor;
+import android.widget.LinearLayout;
 
 public class PageActivity extends AppCompatActivity {
 
@@ -62,6 +68,51 @@ public class PageActivity extends AppCompatActivity {
                        Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(i, resultLoadImage);
                 return  true;
+            case R.id.Insert_Link:
+                LinearLayout linearLayout = new LinearLayout(this);
+                linearLayout.setOrientation(LinearLayout.VERTICAL);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Insert Link");
+
+                final EditText linkText = new EditText(this);
+                linkText.setHint("Link Text:");
+                linearLayout.addView(linkText);
+
+                final EditText linkURL = new EditText(this);
+                linkURL.setHint("Link URL:");
+                linearLayout.addView(linkURL);
+
+                builder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        // TODO: possibly add null checks
+                        String newLinkText = "" + linkText.getText();
+                        String newLinkURL = "" + linkURL.getText();
+
+                        editText.append("\r\n" + newLinkText + ": ");
+
+                        editText.setMovementMethod(LinkMovementMethod.getInstance());
+                        SpannableString ss = new SpannableString(newLinkURL);
+                        Linkify.addLinks(ss, Linkify.WEB_URLS);
+                        CharSequence text = TextUtils.concat(ss, "\u200B");
+                        editText.append(text);
+                        dialog.dismiss();
+                    }
+                });
+
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                builder.setView(linearLayout);
+
+                AlertDialog dialog = builder.create();
+
+                dialog.show();
              default:
                  return super.onOptionsItemSelected(item);
         }
