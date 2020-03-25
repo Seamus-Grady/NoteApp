@@ -7,22 +7,32 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
+import android.text.style.AbsoluteSizeSpan;
 import android.text.style.ImageSpan;
+import android.text.style.StyleSpan;
+import android.text.style.UnderlineSpan;
 import android.text.util.Linkify;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.net.Uri;
 import android.database.Cursor;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 
 public class PageActivity extends AppCompatActivity {
 
@@ -65,7 +75,7 @@ public class PageActivity extends AppCompatActivity {
         {
             case R.id.Insert_Image:
                 Intent i = new Intent(
-                       Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                        Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(i, resultLoadImage);
                 return  true;
             case R.id.Insert_Link:
@@ -113,8 +123,117 @@ public class PageActivity extends AppCompatActivity {
                 AlertDialog dialog = builder.create();
 
                 dialog.show();
-             default:
-                 return super.onOptionsItemSelected(item);
+
+                return true;
+
+            case R.id.Edit_Text:
+                int start = editText.getSelectionStart();
+                int end = editText.getSelectionEnd();
+
+                if (start > end)
+                {
+                    int temp = end;
+                    end = start;
+                    start = temp;
+                }
+
+                final String selectedText = editText.getText().toString().substring(start, end);
+
+                final SpannableString spannedText = new SpannableString(editText.getText());
+                final CharSequence firstPart = spannedText.subSequence(0, start);
+                final CharSequence secondPart = spannedText.subSequence(end, editText.length());
+                final SpannableString selected = new SpannableString(spannedText.subSequence(start, end).toString());
+
+                LinearLayout etLayout = new LinearLayout(this);
+                etLayout.setOrientation(LinearLayout.VERTICAL);
+
+                final AlertDialog.Builder etBuilder = new AlertDialog.Builder(this);
+                etBuilder.setTitle("Edit Text");
+
+                final CheckBox boldCheck = new CheckBox(this);
+                boldCheck.setText("Bold");
+                etLayout.addView(boldCheck);
+
+                final CheckBox italicsCheck = new CheckBox(this);
+                italicsCheck.setText("Italics");
+                etLayout.addView(italicsCheck);
+
+                final CheckBox underlineCheck = new CheckBox(this);
+                underlineCheck.setText("Underline");
+                etLayout.addView(underlineCheck);
+
+                String[] sizes = {"Tiny", "Small", "Normal", "Large", "Massive"};
+                final Spinner spinner = new Spinner(this);
+                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, sizes);
+                arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                spinner.setAdapter(arrayAdapter);
+                spinner.setSelection(2);
+                etLayout.addView(spinner);
+
+                etBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (!selectedText.isEmpty())
+                        {
+                            if (spinner.getSelectedItem().equals("Tiny"))
+                            {
+                                selected.setSpan(new AbsoluteSizeSpan(7, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
+                            else if (spinner.getSelectedItem().equals("Small"))
+                            {
+                                selected.setSpan(new AbsoluteSizeSpan(10, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
+                            else if (spinner.getSelectedItem().equals("Normal"))
+                            {
+                                selected.setSpan(new AbsoluteSizeSpan(12, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
+                            else if (spinner.getSelectedItem().equals("Large"))
+                            {
+                                selected.setSpan(new AbsoluteSizeSpan(18, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
+                            else if (spinner.getSelectedItem().equals("Massive"))
+                            {
+                                selected.setSpan(new AbsoluteSizeSpan(36, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
+
+                            if (boldCheck.isChecked())
+                            {
+                                selected.setSpan(new StyleSpan(Typeface.BOLD), 0, selected.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
+                            if (italicsCheck.isChecked())
+                            {
+                                selected.setSpan(new StyleSpan(Typeface.ITALIC), 0, selected.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
+                            if (underlineCheck.isChecked())
+                            {
+                                selected.setSpan(new UnderlineSpan(), 0, selected.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                            }
+                            SpannableStringBuilder goodText = new SpannableStringBuilder(firstPart);
+                            goodText.append(selected);
+                            goodText.append(secondPart);
+                            editText.setText(goodText);
+                        }
+                        dialog.dismiss();
+                    }
+                });
+
+                etBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+                etBuilder.setView(etLayout);
+
+                AlertDialog etDialog = etBuilder.create();
+
+                etDialog.show();
+
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
