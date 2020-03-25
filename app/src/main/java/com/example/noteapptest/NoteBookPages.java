@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -29,7 +30,7 @@ public class NoteBookPages extends AppCompatActivity {
 
     private ListView listView;
     private EditText editText;
-    private static ArrayList<Editable> noteBookPages = new ArrayList<Editable>();
+    public static ArrayList<Editable> noteBookPages = new ArrayList<Editable>();
     public static ArrayList<String> noteBookPageTitles = new ArrayList<String>();
     public static ArrayAdapter arrayAdapter;
     private int noteBookID;
@@ -164,8 +165,48 @@ public class NoteBookPages extends AppCompatActivity {
                 titleSaved = 1;
                 return true;
             case R.id.Add_Page:
-                Intent intent = new Intent(getApplicationContext(), PageActivity.class);
-                startActivity(intent);
+                if(noteBookID == -1)
+                {
+                    NoteBookActivity.noteBooks.add(editText.getText().toString());
+                    NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                }
+                else
+                {
+                    NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
+                    NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                }
+                titleSaved = 1;
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("New Page Name");
+
+                final EditText input = new EditText(this);
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(input);
+
+                builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(getApplicationContext(), PageActivity.class);
+                        intent.putExtra("pageName", input.getText().toString());
+                        startActivity(intent);
+                        NoteBookPages.this.setTitle(editText.getText().toString());
+                        findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
+                        hideAKeyboard(NoteBookPages.this);
+                    }
+                });
+
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(getApplicationContext(), PageActivity.class);
+                        intent.putExtra("pageName", "");
+                        startActivity(intent);
+                        NoteBookPages.this.setTitle(editText.getText().toString());
+                        findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
+                        hideAKeyboard(NoteBookPages.this);
+                    }
+                });
+                builder.show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
