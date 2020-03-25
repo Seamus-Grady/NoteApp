@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,6 +20,8 @@ import android.text.util.Linkify;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.net.Uri;
 import android.database.Cursor;
@@ -57,6 +60,12 @@ public class PageActivity extends AppCompatActivity {
         inflater.inflate(R.menu.page_menu_bar, menu);
         return true;
     }
+    @Override
+    public void onBackPressed() {
+
+        super.onBackPressed();
+    }
+
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item)
@@ -149,5 +158,17 @@ public class PageActivity extends AppCompatActivity {
             editText.append("\n");
             editText.setSelection(editText.getText().length());
         }
+    }
+
+    private static void hideAKeyboard(Activity activity)
+    {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        //Find the currently focused view, so we can grab the correct window token from it.
+        View view = activity.getCurrentFocus();
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = new View(activity);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 }

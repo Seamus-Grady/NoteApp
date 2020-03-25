@@ -1,13 +1,17 @@
 package com.example.noteapptest;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -23,12 +27,40 @@ public class NoteBookActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_book);
+        this.setTitle("NoteBooks");
 
         listView = findViewById(R.id.listView);
 
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBooks);
 
         listView.setAdapter(arrayAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(getApplicationContext(), NoteBookPages.class);
+                intent.putExtra("noteBookID", position);
+                startActivity(intent);
+            }
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+                new AlertDialog.Builder(NoteBookActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?")
+                        .setMessage("Do you want to delete this notebook?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        noteBooks.remove(position);
+                        arrayAdapter.notifyDataSetChanged();
+                    }
+                }).setNegativeButton("No", null)
+                        .show();
+
+                return true;
+            }
+        });
     }
 
     @Override

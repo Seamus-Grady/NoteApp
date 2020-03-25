@@ -1,14 +1,17 @@
 package com.example.noteapptest;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -26,7 +29,12 @@ public class NoteBookPages extends AppCompatActivity {
 
     private ListView listView;
     private EditText editText;
-    public ArrayList<Editable> noteBookPages = new ArrayList<Editable>();
+    private static ArrayList<Editable> noteBookPages = new ArrayList<Editable>();
+    public static ArrayList<String> noteBookPageTitles = new ArrayList<String>();
+    public static ArrayAdapter arrayAdapter;
+    private int noteBookID;
+    private int titleSaved = 0;
+//    private boolean backButton = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,8 +42,33 @@ public class NoteBookPages extends AppCompatActivity {
         setContentView(R.layout.activity_note_book_pages);
         listView = findViewById(R.id.noteBookPages);
         editText = findViewById(R.id.noteBookName);
-        ArrayAdapter arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPages);
+        Intent intent = getIntent();
+        noteBookID = intent.getIntExtra("noteBookID", -1);
+        if(noteBookID != -1)
+        {
+            this.setTitle(NoteBookActivity.noteBooks.get(noteBookID));
+            editText.setText(NoteBookActivity.noteBooks.get(noteBookID));
+            titleSaved = 1;
+        }
+        arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPageTitles);
         listView.setAdapter(arrayAdapter);
+
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                titleSaved = -1;
+            }
+        });
 
         editText.setOnTouchListener(new View.OnTouchListener()
         {
@@ -63,6 +96,47 @@ public class NoteBookPages extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        switch (titleSaved)
+        {
+            case -1:
+                new AlertDialog.Builder(NoteBookPages.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?")
+                        .setMessage("Do you want to save your notebook's title?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(noteBookID == -1)
+                        {
+                            NoteBookActivity.noteBooks.add(editText.getText().toString());
+                            NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                        }
+                        else
+                        {
+                            NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
+                            NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                        }
+                        NoteBookPages.super.onBackPressed();
+                    }
+                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        NoteBookPages.super.onBackPressed();
+                    }
+                })
+                        .show();
+                break;
+            case 0:
+                NoteBookActivity.noteBooks.add("");
+                NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                NoteBookPages.super.onBackPressed();
+                break;
+            case 1:
+                NoteBookPages.super.onBackPressed();
+                break;
+        }
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.add_a_page_menu, menu);
@@ -75,10 +149,19 @@ public class NoteBookPages extends AppCompatActivity {
         {
             case R.id.Save:
                 this.setTitle(editText.getText().toString());
-                NoteBookActivity.noteBooks.add(editText.getText().toString());
-                NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                if(noteBookID == -1)
+                {
+                    NoteBookActivity.noteBooks.add(editText.getText().toString());
+                    NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                }
+                else
+                {
+                    NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
+                    NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                }
                 findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
                 hideAKeyboard(this);
+                titleSaved = 1;
                 return true;
             case R.id.Add_Page:
                 Intent intent = new Intent(getApplicationContext(), PageActivity.class);
