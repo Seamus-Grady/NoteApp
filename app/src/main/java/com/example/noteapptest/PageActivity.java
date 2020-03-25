@@ -31,7 +31,8 @@ public class PageActivity extends AppCompatActivity {
 
     private static int resultLoadImage = 1;
     private EditText editText;
-    private String pageTitle = "Example Note";
+    private String pageTitle;
+    private int pageID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +40,19 @@ public class PageActivity extends AppCompatActivity {
         this.setTitle(pageTitle);
         setContentView(R.layout.activity_page);
         editText = findViewById(R.id.editText);
+        Intent intent = getIntent();
+        pageTitle = intent.getStringExtra("pageName");
+        pageID = intent.getIntExtra("pageID", -1);
+        if(pageID == -1)
+        {
+            this.setTitle(pageTitle);
+        }
+        else
+        {
+            this.setTitle(NoteBookPages.noteBookPageTitles.get(pageID));
+            editText.setText(NoteBookPages.noteBookPages.get(pageID));
+        }
+
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -61,9 +75,19 @@ public class PageActivity extends AppCompatActivity {
         return true;
     }
     @Override
-    public void onBackPressed() {
-
-        super.onBackPressed();
+    public void onBackPressed()
+    {
+        if(pageID == -1)
+        {
+            NoteBookPages.noteBookPages.add(editText.getText());
+            NoteBookPages.noteBookPageTitles.add(pageTitle);
+            NoteBookPages.arrayAdapter.notifyDataSetChanged();
+            super.onBackPressed();
+        }
+        else {
+            NoteBookPages.noteBookPages.set(pageID, editText.getText());
+            super.onBackPressed();
+        }
     }
 
 
