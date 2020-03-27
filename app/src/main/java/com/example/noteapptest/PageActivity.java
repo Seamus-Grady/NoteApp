@@ -8,10 +8,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -37,12 +39,16 @@ import android.database.Cursor;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 
+import com.google.gson.Gson;
+
 public class PageActivity extends AppCompatActivity {
 
     private static int resultLoadImage = 1;
     private EditText editText;
     private String pageTitle;
     private int pageID;
+//    private PageImageList pageImageList;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +62,7 @@ public class PageActivity extends AppCompatActivity {
         if(pageID == -1)
         {
             this.setTitle(pageTitle);
+//            pageImageList = new PageImageList();
         }
         else
         {
@@ -286,6 +293,8 @@ public class PageActivity extends AppCompatActivity {
             String picturePath = cursor.getString(columnIndex);
             cursor.close();
 
+
+//            ImageSpan imageSpan = new ImageSpan(this, Uri.fromFile(new File(picturePath).getAbsoluteFile()));
             ImageSpan imageSpan = new ImageSpan(this, selectedImage);
             if(editText.getText().length() == 0|| editText.getText().toString().endsWith("\n"))
             {
@@ -298,6 +307,14 @@ public class PageActivity extends AppCompatActivity {
             SpannableString spannableString = new SpannableString(editText.getText());
             spannableString.setSpan(imageSpan, editText.getText().length()-1 , editText.getText().length(), 0);
             editText.setText(spannableString);
+            if(pageID == -1)
+            {
+//                pageImageList.addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage);
+            }
+            else
+            {
+//                NoteBookPages.noteBookPageImages.get(pageID).addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage);
+            }
             editText.append("\n");
             editText.setSelection(editText.getText().length());
         }
@@ -313,5 +330,15 @@ public class PageActivity extends AppCompatActivity {
             view = new View(activity);
         }
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+    private void saveData()
+    {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(NoteBookActivity.noteBooks);
+        editor.putString(NoteBookActivity.saveNoteBooksString,json);
+        editor.apply();
+
     }
 }

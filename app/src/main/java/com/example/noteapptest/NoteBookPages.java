@@ -5,10 +5,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
@@ -18,11 +17,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 
@@ -30,12 +31,12 @@ public class NoteBookPages extends AppCompatActivity {
 
     private ListView listView;
     private EditText editText;
-    public static ArrayList<Editable> noteBookPages = new ArrayList<Editable>();
+    public static ArrayList<Editable> noteBookPages = new ArrayList<>();
     public static ArrayList<String> noteBookPageTitles = new ArrayList<String>();
     public static ArrayAdapter arrayAdapter;
     private int noteBookID;
     private int titleSaved = 0;
-//    private boolean backButton = false;
+    private int STORAGE_PERMISSION_CODE = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +50,15 @@ public class NoteBookPages extends AppCompatActivity {
         {
             this.setTitle(NoteBookActivity.noteBooks.get(noteBookID));
             editText.setText(NoteBookActivity.noteBooks.get(noteBookID));
+            noteBookPages = NoteBookActivity.noteBooksPages.get(noteBookID);
+            noteBookPageTitles = NoteBookActivity.noteBookPageTitlesList.get(noteBookID);
             titleSaved = 1;
+        }
+        else
+        {
+            noteBookPageTitles = new ArrayList<>();
+            noteBookPages = new ArrayList<>();
+
         }
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPageTitles);
         listView.setAdapter(arrayAdapter);
@@ -95,6 +104,15 @@ public class NoteBookPages extends AppCompatActivity {
                 }
             }
         });
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(getApplicationContext(), PageActivity.class);
+                intent.putExtra("pageID", position);
+                startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -110,11 +128,15 @@ public class NoteBookPages extends AppCompatActivity {
                         if(noteBookID == -1)
                         {
                             NoteBookActivity.noteBooks.add(editText.getText().toString());
+                            NoteBookActivity.noteBooksPages.add(noteBookPages);
+                            NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
                             NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                         }
                         else
                         {
                             NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
+                            NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                            NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
                             NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                         }
                         NoteBookPages.super.onBackPressed();
@@ -122,17 +144,40 @@ public class NoteBookPages extends AppCompatActivity {
                 }).setNegativeButton("No", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        if(noteBookID == -1)
+                        {
+                            NoteBookActivity.noteBooksPages.add(noteBookPages);
+                            NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                        }
+                        else
+                        {
+                            NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                            NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        }
                         NoteBookPages.super.onBackPressed();
                     }
                 })
                         .show();
+                //saveData();
                 break;
             case 0:
                 NoteBookActivity.noteBooks.add("");
                 NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                 NoteBookPages.super.onBackPressed();
+                //saveData();
                 break;
             case 1:
+                if(noteBookID == -1)
+                {
+                    NoteBookActivity.noteBooksPages.add(noteBookPages);
+                    NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                }
+                else
+                {
+                    NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                    NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                }
+                //saveData();
                 NoteBookPages.super.onBackPressed();
                 break;
         }
@@ -168,7 +213,15 @@ public class NoteBookPages extends AppCompatActivity {
             case R.id.Add_Page:
                 if(noteBookID == -1)
                 {
-                    NoteBookActivity.noteBooks.add(editText.getText().toString());
+                    if(titleSaved == 0)
+                    {
+                        NoteBookActivity.noteBooks.add("");
+                    }
+                    else
+                    {
+                        NoteBookActivity.noteBooks.add(editText.getText().toString());
+                    }
+
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                 }
                 else
@@ -190,7 +243,6 @@ public class NoteBookPages extends AppCompatActivity {
                         Intent intent = new Intent(getApplicationContext(), PageActivity.class);
                         intent.putExtra("pageName", input.getText().toString());
                         startActivity(intent);
-                        NoteBookPages.this.setTitle(editText.getText().toString());
                         findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
                         hideAKeyboard(NoteBookPages.this);
                     }
@@ -202,12 +254,14 @@ public class NoteBookPages extends AppCompatActivity {
                         Intent intent = new Intent(getApplicationContext(), PageActivity.class);
                         intent.putExtra("pageName", "");
                         startActivity(intent);
-                        NoteBookPages.this.setTitle(editText.getText().toString());
                         findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
                         hideAKeyboard(NoteBookPages.this);
                     }
                 });
                 builder.show();
+                this.setTitle(NoteBookActivity.noteBooks.get(NoteBookActivity.noteBooks.size()-1));
+                editText.setText(NoteBookActivity.noteBooks.get(NoteBookActivity.noteBooks.size()-1));
+                editText.setSelection(editText.getText().length());
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -226,4 +280,29 @@ public class NoteBookPages extends AppCompatActivity {
         }
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
+
+//    private void saveData()
+//    {
+//        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+//        SharedPreferences.Editor editor = sharedPreferences.edit();
+//        Gson gson = new Gson();
+//        String json = gson.toJson(NoteBookActivity.noteBooks);
+//        editor.putString(NoteBookActivity.saveNoteBooksString,json);
+//
+//
+//        gson = new Gson();
+//        json = gson.toJson(NoteBookPages.noteBookPages);
+//        editor.putString(NoteBookActivity.saveNoteBooksPagesString, json);
+//
+//        gson = new Gson();
+//        json = gson.toJson(NoteBookActivity.noteBookPageTitlesList);
+//        editor.putString(NoteBookActivity.saveNoteBooksPageTitleListString, json);
+//
+//        editor.apply();
+//    }
+
+//    private void loadData()
+//    {
+//
+//    }
 }
