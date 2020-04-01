@@ -13,7 +13,6 @@ import android.graphics.Typeface;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
-import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -39,7 +38,7 @@ import android.database.Cursor;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 
-import com.google.gson.Gson;
+//import com.google.gson.Gson;
 
 public class PageActivity extends AppCompatActivity {
 
@@ -67,7 +66,7 @@ public class PageActivity extends AppCompatActivity {
         else
         {
             this.setTitle(NoteBookPages.noteBookPageTitles.get(pageID));
-            editText.setText(NoteBookPages.noteBookPages.get(pageID));
+            editText.setText(new SpannableString(NoteBookPages.noteBookPages.get(pageID)));
         }
 
         editText.addTextChangedListener(new TextWatcher() {
@@ -91,6 +90,7 @@ public class PageActivity extends AppCompatActivity {
         inflater.inflate(R.menu.page_menu_bar, menu);
         return true;
     }
+
     @Override
     public void onBackPressed()
     {
@@ -118,6 +118,7 @@ public class PageActivity extends AppCompatActivity {
                         Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
                 startActivityForResult(i, resultLoadImage);
                 return  true;
+
             case R.id.Insert_Link:
                 LinearLayout linearLayout = new LinearLayout(this);
                 linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -217,19 +218,19 @@ public class PageActivity extends AppCompatActivity {
                         {
                             if (spinner.getSelectedItem().equals("Tiny"))
                             {
-                                selected.setSpan(new AbsoluteSizeSpan(7, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                selected.setSpan(new AbsoluteSizeSpan(10, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             }
                             else if (spinner.getSelectedItem().equals("Small"))
                             {
-                                selected.setSpan(new AbsoluteSizeSpan(10, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                selected.setSpan(new AbsoluteSizeSpan(12, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             }
                             else if (spinner.getSelectedItem().equals("Normal"))
                             {
-                                selected.setSpan(new AbsoluteSizeSpan(12, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                selected.setSpan(new AbsoluteSizeSpan(18, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             }
                             else if (spinner.getSelectedItem().equals("Large"))
                             {
-                                selected.setSpan(new AbsoluteSizeSpan(18, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                                selected.setSpan(new AbsoluteSizeSpan(24, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                             }
                             else if (spinner.getSelectedItem().equals("Massive"))
                             {
@@ -331,14 +332,13 @@ public class PageActivity extends AppCompatActivity {
         }
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
-    private void saveData()
-    {
-        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        Gson gson = new Gson();
-        String json = gson.toJson(NoteBookActivity.noteBooks);
-        editor.putString(NoteBookActivity.saveNoteBooksString,json);
-        editor.apply();
-
-    }
+//    private void saveData()
+//    {
+//        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+//        SharedPreferences.Editor editor = sharedPreferences.edit();
+//        Gson gson = new Gson();
+//        String json = gson.toJson(NoteBookActivity.noteBooks);
+//        editor.putString(NoteBookActivity.saveNoteBooksString,json);
+//        editor.apply();
+//    }
 }
