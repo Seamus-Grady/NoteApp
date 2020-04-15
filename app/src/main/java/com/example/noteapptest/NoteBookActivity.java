@@ -3,10 +3,14 @@ package com.example.noteapptest;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -43,6 +47,10 @@ public class NoteBookActivity extends AppCompatActivity {
     public static String saveNoteBooksString = "notebook list";
     public static String saveNoteBooksPagesString = "notebook pages list";
     public static String saveNoteBooksPageTitleListString = "notebook page title string";
+    private static final String[] LOCATION_PERMS={
+            Manifest.permission.ACCESS_FINE_LOCATION
+};
+    private static final int LOCATION_REQUEST=1340;
 
 
     @Override
@@ -50,6 +58,9 @@ public class NoteBookActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_book);
         this.setTitle("NoteBooks");
+
+        requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
+
         //clearData();
         listView = findViewById(R.id.listView);
 

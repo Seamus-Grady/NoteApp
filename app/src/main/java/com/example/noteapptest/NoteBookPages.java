@@ -263,6 +263,18 @@ public class NoteBookPages extends AppCompatActivity {
                 editText.setText(NoteBookActivity.noteBooks.get(NoteBookActivity.noteBooks.size()-1));
                 editText.setSelection(editText.getText().length());
                 return true;
+            case R.id.Add_Location:
+                new AlertDialog.Builder(NoteBookPages.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Tag a new location")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                                startActivity(intent);
+                            }
+                        }).setNegativeButton("No", null)
+                        .show();
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
 

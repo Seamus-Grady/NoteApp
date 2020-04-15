@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/Add_NoteBook"
-        android:icon="@drawable/ic_add_new_notebook"
-        android:title="Insert New Notebook"
+    <item android:id="@+id/Add_Location"
+        android:icon="@drawable/map_activity_check"
+        android:title="Select A Location"
         app:showAsAction="ifRoom"
         />
-
-
 </menu>

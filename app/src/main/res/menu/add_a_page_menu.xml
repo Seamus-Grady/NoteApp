@@ -11,5 +11,10 @@
         android:title="Save"
         app:showAsAction="ifRoom"
         />
+    <item android:id="@+id/Add_Location"
+        android:icon="@drawable/add_new_location"
+        android:title="Insert New Location"
+        app:showAsAction="ifRoom"
+        />
 
 </menu>
