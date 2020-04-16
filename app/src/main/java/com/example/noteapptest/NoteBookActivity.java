@@ -49,6 +49,10 @@ public class NoteBookActivity extends AppCompatActivity {
     public static String saveNoteBooksPagesString = "notebook pages list";
     public static String saveNoteBooksPageTitleListString = "notebook page title string";
     private static final int Access_Photos = 1;
+    private static final String[] LOCATION_PERMS={
+            Manifest.permission.ACCESS_FINE_LOCATION
+};
+    private static final int LOCATION_REQUEST=1340;
 
 
     @Override
@@ -57,6 +61,9 @@ public class NoteBookActivity extends AppCompatActivity {
         setContentView(R.layout.activity_note_book);
         this.setTitle("NoteBooks");
         verifyPermission();
+
+        requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
+
         //clearData();
         listView = findViewById(R.id.listView);
 

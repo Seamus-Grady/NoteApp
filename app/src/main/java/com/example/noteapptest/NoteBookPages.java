@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -40,6 +41,8 @@ public class NoteBookPages extends AppCompatActivity {
     private boolean defaultState;
     private String defaultTitle;
     private int STORAGE_PERMISSION_CODE = 1;
+    private double latitude;
+    private double longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +52,8 @@ public class NoteBookPages extends AppCompatActivity {
         editText = findViewById(R.id.noteBookName);
         Intent intent = getIntent();
         noteBookID = intent.getIntExtra("noteBookID", -1);
+        latitude = intent.getDoubleExtra("latitude", 181.0);
+        longitude = intent.getDoubleExtra("longitude", 181.0);
         if(noteBookID != -1)
         {
             this.setTitle(NoteBookActivity.noteBooks.get(noteBookID));
@@ -66,6 +71,19 @@ public class NoteBookPages extends AppCompatActivity {
             defaultState = true;
 
         }
+
+        if (latitude != 181.0)
+        {
+            Toast toast = Toast.makeText(getApplicationContext(), "Latitude: " + latitude, Toast.LENGTH_SHORT);
+            toast.show();
+        }
+        if (longitude != 181.0)
+        {
+            Toast toast = Toast.makeText(getApplicationContext(), "Longitude: " + longitude, Toast.LENGTH_SHORT);
+            toast.show();
+        }
+
+
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPageTitles);
         listView.setAdapter(arrayAdapter);
 
@@ -385,6 +403,18 @@ public class NoteBookPages extends AppCompatActivity {
                 this.setTitle(NoteBookActivity.noteBooks.get(NoteBookActivity.noteBooks.size()-1));
                 editText.setText(NoteBookActivity.noteBooks.get(NoteBookActivity.noteBooks.size()-1));
                 editText.setSelection(editText.getText().length());
+                return true;
+            case R.id.Add_Location:
+                new AlertDialog.Builder(NoteBookPages.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Tag a new location")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                                startActivity(intent);
+                            }
+                        }).setNegativeButton("No", null)
+                        .show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
