@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -47,10 +48,11 @@ public class NoteBookActivity extends AppCompatActivity {
     public static String saveNoteBooksString = "notebook list";
     public static String saveNoteBooksPagesString = "notebook pages list";
     public static String saveNoteBooksPageTitleListString = "notebook page title string";
-    private static final String[] LOCATION_PERMS={
-            Manifest.permission.ACCESS_FINE_LOCATION
-};
-    private static final int LOCATION_REQUEST=1340;
+    private static final int Access_Photos = 1;
+//    private static final String[] LOCATION_PERMS={
+//            Manifest.permission.ACCESS_FINE_LOCATION
+//};
+//    private static final int LOCATION_REQUEST=1340;
 
 
     @Override
@@ -58,14 +60,15 @@ public class NoteBookActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_book);
         this.setTitle("NoteBooks");
+        verifyPermission();
 
-        requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
+        // requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
 
         //clearData();
         listView = findViewById(R.id.listView);
 
         //loadData();
-        //noteBooks = new ArrayList<>();
+        noteBooks = new ArrayList<>();
 
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBooks);
 
@@ -89,6 +92,8 @@ public class NoteBookActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         noteBooks.remove(position);
+                        noteBookPageTitlesList.remove(position);
+                        noteBooksPages.remove(position);
                         arrayAdapter.notifyDataSetChanged();
                     }
                 }).setNegativeButton("No", null)
@@ -172,6 +177,28 @@ public class NoteBookActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.clear();
         editor.apply();
+    }
+
+    private void verifyPermission()
+    {
+
+
+        String[] permission = {Manifest.permission.READ_EXTERNAL_STORAGE};
+        //Log.d("Permissions", "Requesting permissions: " + permission);
+
+        if(ContextCompat.checkSelfPermission(this.getApplicationContext(), permission[0]) == PackageManager.PERMISSION_GRANTED)
+        {
+
+        }
+        else
+        {
+            ActivityCompat.requestPermissions(this, permission, Access_Photos);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        verifyPermission();
     }
 
 }
