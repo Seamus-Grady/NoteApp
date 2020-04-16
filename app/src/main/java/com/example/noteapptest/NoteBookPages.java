@@ -20,7 +20,9 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
 import com.google.gson.Gson;
@@ -35,7 +37,8 @@ public class NoteBookPages extends AppCompatActivity {
     public static ArrayList<String> noteBookPageTitles = new ArrayList<String>();
     public static ArrayAdapter arrayAdapter;
     private int noteBookID;
-    private int titleSaved = 0;
+    private boolean defaultState;
+    private String defaultTitle;
     private int STORAGE_PERMISSION_CODE = 1;
 
     @Override
@@ -50,18 +53,107 @@ public class NoteBookPages extends AppCompatActivity {
         {
             this.setTitle(NoteBookActivity.noteBooks.get(noteBookID));
             editText.setText(NoteBookActivity.noteBooks.get(noteBookID));
+            defaultTitle = NoteBookActivity.noteBooks.get(noteBookID);
             noteBookPages = NoteBookActivity.noteBooksPages.get(noteBookID);
             noteBookPageTitles = NoteBookActivity.noteBookPageTitlesList.get(noteBookID);
-            titleSaved = 1;
+            defaultState = false;
         }
         else
         {
+            defaultTitle = "Title";
             noteBookPageTitles = new ArrayList<>();
             noteBookPages = new ArrayList<>();
+            defaultState = true;
 
         }
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPageTitles);
         listView.setAdapter(arrayAdapter);
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
+
+                LinearLayout etLayout = new LinearLayout(NoteBookPages.this);
+                etLayout.setOrientation(LinearLayout.HORIZONTAL);
+
+                final AlertDialog.Builder settings = new AlertDialog.Builder(NoteBookPages.this);
+
+                settings.setTitle("Options");
+
+                Button changeTitle = new Button(NoteBookPages.this);
+                changeTitle.setText("Change Title");
+
+                changeTitle.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(NoteBookPages.this);
+                        builder.setTitle("New Page Name");
+
+                        final EditText input = new EditText(NoteBookPages.this);
+                        input.setInputType(InputType.TYPE_CLASS_TEXT);
+                        builder.setView(input);
+
+                        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                NoteBookPages.noteBookPageTitles.set(position, input.getText().toString());
+                                arrayAdapter.notifyDataSetChanged();
+                            }
+                        });
+
+                        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+                        builder.show();
+
+
+                    }
+                });
+
+                etLayout.addView(changeTitle);
+
+                Button deletePage = new Button(NoteBookPages.this);
+                deletePage.setText("Delete Page");
+
+                deletePage.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        new AlertDialog.Builder(NoteBookPages.this)
+                                .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?")
+                                .setMessage("Do you want to delete this page?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                NoteBookPages.noteBookPageTitles.remove(position);
+                                arrayAdapter.notifyDataSetChanged();
+                            }
+                        }).setNegativeButton("No", null)
+                                .show();
+
+                    }
+                });
+
+                etLayout.addView(deletePage);
+
+                settings.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+
+
+                settings.setView(etLayout);
+
+                AlertDialog settingsDialog = settings.create();
+
+                settingsDialog.show();
+                return  true;
+
+            }
+        });
 
 
         editText.addTextChangedListener(new TextWatcher() {
@@ -72,12 +164,12 @@ public class NoteBookPages extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+                //titleSaved = -1;
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-                titleSaved = -1;
+
             }
         });
 
@@ -117,69 +209,83 @@ public class NoteBookPages extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        switch (titleSaved)
+        if(!editText.getText().toString().equals(defaultTitle))
         {
-            case -1:
-                new AlertDialog.Builder(NoteBookPages.this)
-                        .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?")
-                        .setMessage("Do you want to save your notebook's title?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if(noteBookID == -1)
-                        {
-                            NoteBookActivity.noteBooks.add(editText.getText().toString());
-                            NoteBookActivity.noteBooksPages.add(noteBookPages);
-                            NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
-                            NoteBookActivity.arrayAdapter.notifyDataSetChanged();
-                        }
-                        else
-                        {
-                            NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
-                            NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
-                            NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
-                            NoteBookActivity.arrayAdapter.notifyDataSetChanged();
-                        }
-                        NoteBookPages.super.onBackPressed();
+            new AlertDialog.Builder(NoteBookPages.this)
+                    .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?")
+                    .setMessage("Do you want to save your notebook's title?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if(NoteBookActivity.noteBooksPages.size()-1 != noteBookID || noteBookID == -1)
+                    {
+                        NoteBookActivity.noteBooks.add(editText.getText().toString());
+                        NoteBookActivity.noteBooksPages.add(noteBookPages);
+                        NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     }
-                }).setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        if(noteBookID == -1)
-                        {
-                            NoteBookActivity.noteBooksPages.add(noteBookPages);
-                            NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
-                        }
-                        else
-                        {
-                            NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
-                            NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
-                        }
-                        NoteBookPages.super.onBackPressed();
+                    else
+                    {
+                        NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
+                        NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                        NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     }
-                })
-                        .show();
-                //saveData();
-                break;
-            case 0:
-                NoteBookActivity.noteBooks.add("");
-                NoteBookActivity.arrayAdapter.notifyDataSetChanged();
-                NoteBookPages.super.onBackPressed();
-                //saveData();
-                break;
-            case 1:
-                if(noteBookID == -1)
-                {
-                    NoteBookActivity.noteBooksPages.add(noteBookPages);
-                    NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                    NoteBookPages.super.onBackPressed();
                 }
-                else
-                {
-                    NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
-                    NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+            }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    if(noteBookID == -1)
+                    {
+                        NoteBookActivity.noteBooks.add("");
+                        NoteBookActivity.noteBooksPages.add(noteBookPages);
+                        NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                    }
+                    else
+                    {
+                        NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                        NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                    }
+                    NoteBookPages.super.onBackPressed();
                 }
-                //saveData();
-                NoteBookPages.super.onBackPressed();
-                break;
+            })
+                    .show();
+            //saveData();
+        }
+        else
+        {
+                if(defaultState)
+                {
+                    if (NoteBookActivity.noteBooksPages.size()-1 != noteBookID || noteBookID == -1) {
+                        NoteBookActivity.noteBooks.add("");
+                        NoteBookActivity.noteBooksPages.add(noteBookPages);
+                        NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                    } else {
+                        NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                        NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                    }
+                    NoteBookPages.super.onBackPressed();
+                    //saveData();
+                }
+                else {
+//                    if (NoteBookActivity.noteBooksPages.size()-1  != noteBookID || noteBookID == -1) {
+//                        NoteBookActivity.noteBooksPages.add(noteBookPages);
+//                        NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+//                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+//                    }
+//                    else {
+                        NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                        NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+
+                    //saveData();
+                    NoteBookPages.super.onBackPressed();
+                }
+
         }
     }
 
@@ -192,44 +298,61 @@ public class NoteBookPages extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        hideAKeyboard(this);
         switch (item.getItemId())
         {
             case R.id.Save:
                 this.setTitle(editText.getText().toString());
-                if(noteBookID == -1)
+                if(NoteBookActivity.noteBooksPages.size()-1 != noteBookID || noteBookID == -1)
                 {
                     NoteBookActivity.noteBooks.add(editText.getText().toString());
+                    NoteBookActivity.noteBooksPages.add(noteBookPages);
+                    NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                    noteBookID = NoteBookActivity.noteBooksPages.size()-1;
                 }
                 else
                 {
                     NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
+                    NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                    NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                 }
                 findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
                 hideAKeyboard(this);
-                titleSaved = 1;
+//                titleSaved = 1;
+                defaultState = false;
+                defaultTitle = editText.getText().toString();
                 return true;
             case R.id.Add_Page:
                 if(noteBookID == -1)
                 {
-                    if(titleSaved == 0)
+                    if(editText.getText().toString().equals("Title"))
                     {
                         NoteBookActivity.noteBooks.add("");
+                        defaultTitle = "";
                     }
                     else
                     {
                         NoteBookActivity.noteBooks.add(editText.getText().toString());
+                        defaultTitle = editText.getText().toString();
                     }
-
+                    NoteBookActivity.noteBooksPages.add(noteBookPages);
+                    NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                    NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                    noteBookID = NoteBookActivity.noteBooksPages.size()-1;
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                 }
                 else
                 {
                     NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
+                    NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                    NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                    defaultTitle = editText.getText().toString();
                 }
-                titleSaved = 1;
+                defaultState = false;
+//                titleSaved = 1;
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("New Page Name");
 

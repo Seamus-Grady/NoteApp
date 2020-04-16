@@ -4,12 +4,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
@@ -37,6 +44,12 @@ import android.net.Uri;
 import android.database.Cursor;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.Toast;
+
+import java.io.FileNotFoundException;
+
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.EasyPermissions;
 
 //import com.google.gson.Gson;
 
@@ -295,8 +308,15 @@ public class PageActivity extends AppCompatActivity {
             cursor.close();
 
 
-//            ImageSpan imageSpan = new ImageSpan(this, Uri.fromFile(new File(picturePath).getAbsoluteFile()));
-            ImageSpan imageSpan = new ImageSpan(this, selectedImage);
+            ImageSpan imageSpan = null;
+            try {
+                imageSpan = new ImageSpan(this, decodeUri(this, selectedImage, 100));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+//            Drawable d = imageSpan.getDrawable();
+//            d.setBounds(0,0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
+//            imageSpan = new ImageSpan(d, ImageSpan.ALIGN_BASELINE);
             if(editText.getText().length() == 0|| editText.getText().toString().endsWith("\n"))
             {
                 editText.append(" ");
@@ -306,7 +326,7 @@ public class PageActivity extends AppCompatActivity {
                 editText.append("\n" + " ");
             }
             SpannableString spannableString = new SpannableString(editText.getText());
-            spannableString.setSpan(imageSpan, editText.getText().length()-1 , editText.getText().length(), 0);
+            spannableString.setSpan(imageSpan, editText.getText().length()-1 , editText.getText().length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             editText.setText(spannableString);
             if(pageID == -1)
             {
@@ -341,4 +361,28 @@ public class PageActivity extends AppCompatActivity {
 //        editor.putString(NoteBookActivity.saveNoteBooksString,json);
 //        editor.apply();
 //    }
+
+    private static Bitmap decodeUri(Context c, Uri uri, final int requiredSize)
+            throws FileNotFoundException {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(c.getContentResolver().openInputStream(uri), null, o);
+
+        int width_tmp = o.outWidth
+                , height_tmp = o.outHeight;
+        int scale = 1;
+
+        while(true) {
+            if(width_tmp / 2 < requiredSize || height_tmp / 2 < requiredSize)
+                break;
+            width_tmp /= 2;
+            height_tmp /= 2;
+            scale *= 2;
+        }
+
+        BitmapFactory.Options o2 = new BitmapFactory.Options();
+        o2.inSampleSize = scale;
+        return BitmapFactory.decodeStream(c.getContentResolver().openInputStream(uri), null, o2);
+    }
+
 }
