@@ -22,6 +22,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 
@@ -37,6 +38,8 @@ public class NoteBookPages extends AppCompatActivity {
     private int noteBookID;
     private int titleSaved = 0;
     private int STORAGE_PERMISSION_CODE = 1;
+    private double latitude;
+    private double longitude;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +49,8 @@ public class NoteBookPages extends AppCompatActivity {
         editText = findViewById(R.id.noteBookName);
         Intent intent = getIntent();
         noteBookID = intent.getIntExtra("noteBookID", -1);
+        latitude = intent.getDoubleExtra("latitude", 181.0);
+        longitude = intent.getDoubleExtra("longitude", 181.0);
         if(noteBookID != -1)
         {
             this.setTitle(NoteBookActivity.noteBooks.get(noteBookID));
@@ -60,6 +65,19 @@ public class NoteBookPages extends AppCompatActivity {
             noteBookPages = new ArrayList<>();
 
         }
+
+        if (latitude != 181.0)
+        {
+            Toast toast = Toast.makeText(getApplicationContext(), "Latitude: " + latitude, Toast.LENGTH_SHORT);
+            toast.show();
+        }
+        if (longitude != 181.0)
+        {
+            Toast toast = Toast.makeText(getApplicationContext(), "Longitude: " + longitude, Toast.LENGTH_SHORT);
+            toast.show();
+        }
+
+
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPageTitles);
         listView.setAdapter(arrayAdapter);
 

@@ -40,12 +40,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (item.getItemId())
         {
             case R.id.Add_Location:
-                mLocation = gpsTracker.getLocation();
+//                mLocation = gpsTracker.getLocation();
 
-                latitude = mLocation.getLatitude();
-                longitude = mLocation.getLongitude();
-                Toast toast = Toast.makeText(getApplicationContext(),latitude + " " + longitude, Toast.LENGTH_LONG);
-                toast.show();
+//                latitude = mLocation.getLatitude();
+//                longitude = mLocation.getLongitude();
+
+                Intent intent = new Intent(getApplicationContext(), NoteBookPages.class);
+                intent.putExtra("latitude", latitude);
+                intent.putExtra("longitude", longitude);
+                startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -87,6 +90,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // Setting the title for the marker.
                 // This will be displayed on taping the marker
                 markerOptions.title(latLng.latitude + " : " + latLng.longitude);
+
+                latitude = latLng.latitude;
+                longitude = latLng.longitude;
 
                 // Clears the previously touched position
                 mMap.clear();

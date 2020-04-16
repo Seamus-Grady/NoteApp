@@ -45,7 +45,7 @@ public class GPSTracker extends Service implements LocationListener {
                         }
                     }
                 }
-                // if lcoation is not found from GPS than it will found from network //
+                // if location is not found from GPS than it will found from network //
                 if(location==null){
                     if(isNetworkEnabled){
 
