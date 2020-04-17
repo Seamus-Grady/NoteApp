@@ -68,6 +68,16 @@ public class NoteBookActivity extends AppCompatActivity {
         this.setTitle("NoteBooks");
         verifyPermission();
 
+        Intent intent = getIntent();
+        double newLatitude = intent.getDoubleExtra("latitude", 181.0);
+        double newLongitude = intent.getDoubleExtra("longitude", 181.0);
+
+        if (newLatitude != 181.0 && newLongitude != 181.0)
+        {
+            Double[] newLoc = {newLatitude, newLongitude};
+            locations.add(newLoc);
+        }
+
         requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
         listView = findViewById(R.id.listView);
 

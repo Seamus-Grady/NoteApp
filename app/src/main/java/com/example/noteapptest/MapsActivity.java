@@ -48,7 +48,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         {
             case R.id.Add_Location:
 
-                Intent intent = new Intent(getApplicationContext(), NoteBookPages.class);
+                Intent intent = new Intent(getApplicationContext(), NoteBookActivity.class);
                 intent.putExtra("latitude", latitude);
                 intent.putExtra("longitude", longitude);
                 startActivity(intent);

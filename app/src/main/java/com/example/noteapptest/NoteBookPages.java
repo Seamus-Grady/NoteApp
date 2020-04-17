@@ -44,9 +44,6 @@ public class NoteBookPages extends AppCompatActivity {
     private boolean defaultState;
     private String defaultTitle;
     private int STORAGE_PERMISSION_CODE = 1;
-    private double latitude;
-    private double longitude;
-    public static ArrayList<double[]> locationTags = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,8 +54,7 @@ public class NoteBookPages extends AppCompatActivity {
         //LoadData
         Intent intent = getIntent();
         noteBookID = intent.getIntExtra("noteBookID", -1);
-        latitude = intent.getDoubleExtra("latitude", 181.0);
-        longitude = intent.getDoubleExtra("longitude", 181.0);
+
         if(noteBookID != -1)
         {
             //LoadData();//////figuring out what to load here/////////////
@@ -78,14 +74,6 @@ public class NoteBookPages extends AppCompatActivity {
             imagesForPage = new ArrayList<>();
             defaultState = true;
 
-        }
-
-        if (latitude != 181.0 && longitude != 181.0)
-        {
-            double[] newLoc = new double[2];
-            newLoc[0] = latitude;
-            newLoc[1] = longitude;
-            locationTags.add(newLoc);
         }
 
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPageTitles);
