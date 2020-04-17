@@ -11,6 +11,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputType;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,8 +36,9 @@ public class NoteBookPages extends AppCompatActivity {
 
     private ListView listView;
     private EditText editText;
-    public static ArrayList<Editable> noteBookPages = new ArrayList<>();
-    public static ArrayList<String> noteBookPageTitles = new ArrayList<String>();
+    public static ArrayList<String> noteBookPages;
+    public static ArrayList<String> noteBookPageTitles;
+    public static ArrayList<PageImageList> imagesForPage;
     public static ArrayAdapter arrayAdapter;
     private int noteBookID;
     private boolean defaultState;
@@ -50,17 +53,20 @@ public class NoteBookPages extends AppCompatActivity {
         setContentView(R.layout.activity_note_book_pages);
         listView = findViewById(R.id.noteBookPages);
         editText = findViewById(R.id.noteBookName);
+        //LoadData
         Intent intent = getIntent();
         noteBookID = intent.getIntExtra("noteBookID", -1);
         latitude = intent.getDoubleExtra("latitude", 181.0);
         longitude = intent.getDoubleExtra("longitude", 181.0);
         if(noteBookID != -1)
         {
+            //LoadData();//////figuring out what to load here/////////////
             this.setTitle(NoteBookActivity.noteBooks.get(noteBookID));
             editText.setText(NoteBookActivity.noteBooks.get(noteBookID));
             defaultTitle = NoteBookActivity.noteBooks.get(noteBookID);
             noteBookPages = NoteBookActivity.noteBooksPages.get(noteBookID);
             noteBookPageTitles = NoteBookActivity.noteBookPageTitlesList.get(noteBookID);
+            imagesForPage = NoteBookActivity.noteBookPagesImages.get(noteBookID);
             defaultState = false;
         }
         else
@@ -68,6 +74,7 @@ public class NoteBookPages extends AppCompatActivity {
             defaultTitle = "Title";
             noteBookPageTitles = new ArrayList<>();
             noteBookPages = new ArrayList<>();
+            imagesForPage = new ArrayList<>();
             defaultState = true;
 
         }
@@ -145,7 +152,9 @@ public class NoteBookPages extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 NoteBookPages.noteBookPageTitles.remove(position);
+                                imagesForPage.remove(position);
                                 arrayAdapter.notifyDataSetChanged();
+                                saveData();
                             }
                         }).setNegativeButton("No", null)
                                 .show();
@@ -239,6 +248,7 @@ public class NoteBookPages extends AppCompatActivity {
                         NoteBookActivity.noteBooks.add(editText.getText().toString());
                         NoteBookActivity.noteBooksPages.add(noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                        NoteBookActivity.noteBookPagesImages.add(imagesForPage);
                         NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     }
                     else
@@ -246,6 +256,7 @@ public class NoteBookPages extends AppCompatActivity {
                         NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
                         NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        NoteBookActivity.noteBookPagesImages.set(noteBookID, imagesForPage);
                         NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     }
                     NoteBookPages.super.onBackPressed();
@@ -258,19 +269,21 @@ public class NoteBookPages extends AppCompatActivity {
                         NoteBookActivity.noteBooks.add("");
                         NoteBookActivity.noteBooksPages.add(noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                        NoteBookActivity.noteBookPagesImages.add(imagesForPage);
                         NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     }
                     else
                     {
                         NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        NoteBookActivity.noteBookPagesImages.set(noteBookID, imagesForPage);
                         NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     }
                     NoteBookPages.super.onBackPressed();
                 }
             })
                     .show();
-            //saveData();
+            saveData();
         }
         else
         {
@@ -280,10 +293,12 @@ public class NoteBookPages extends AppCompatActivity {
                         NoteBookActivity.noteBooks.add("");
                         NoteBookActivity.noteBooksPages.add(noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                        NoteBookActivity.noteBookPagesImages.add(imagesForPage);
                         NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     } else {
                         NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        NoteBookActivity.noteBookPagesImages.set(noteBookID, imagesForPage);
                         NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     }
                     NoteBookPages.super.onBackPressed();
@@ -298,12 +313,13 @@ public class NoteBookPages extends AppCompatActivity {
 //                    else {
                         NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                        NoteBookActivity.noteBookPagesImages.set(noteBookID, imagesForPage);
                         NoteBookActivity.arrayAdapter.notifyDataSetChanged();
 
                     //saveData();
                     NoteBookPages.super.onBackPressed();
                 }
-
+                saveData();
         }
     }
 
@@ -326,6 +342,7 @@ public class NoteBookPages extends AppCompatActivity {
                     NoteBookActivity.noteBooks.add(editText.getText().toString());
                     NoteBookActivity.noteBooksPages.add(noteBookPages);
                     NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                    NoteBookActivity.noteBookPagesImages.add(imagesForPage);
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     noteBookID = NoteBookActivity.noteBooksPages.size()-1;
                 }
@@ -334,6 +351,7 @@ public class NoteBookPages extends AppCompatActivity {
                     NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
                     NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
                     NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                    NoteBookActivity.noteBookPagesImages.set(noteBookID, imagesForPage);
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                 }
                 findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
@@ -341,6 +359,7 @@ public class NoteBookPages extends AppCompatActivity {
 //                titleSaved = 1;
                 defaultState = false;
                 defaultTitle = editText.getText().toString();
+                saveData();
                 return true;
             case R.id.Add_Page:
                 if(noteBookID == -1)
@@ -357,6 +376,7 @@ public class NoteBookPages extends AppCompatActivity {
                     }
                     NoteBookActivity.noteBooksPages.add(noteBookPages);
                     NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                    NoteBookActivity.noteBookPagesImages.add(imagesForPage);
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     noteBookID = NoteBookActivity.noteBooksPages.size()-1;
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
@@ -366,6 +386,7 @@ public class NoteBookPages extends AppCompatActivity {
                     NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
                     NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
                     NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                    NoteBookActivity.noteBookPagesImages.set(noteBookID, imagesForPage);
                     NoteBookActivity.arrayAdapter.notifyDataSetChanged();
                     defaultTitle = editText.getText().toString();
                 }
@@ -403,6 +424,7 @@ public class NoteBookPages extends AppCompatActivity {
                 this.setTitle(NoteBookActivity.noteBooks.get(NoteBookActivity.noteBooks.size()-1));
                 editText.setText(NoteBookActivity.noteBooks.get(NoteBookActivity.noteBooks.size()-1));
                 editText.setSelection(editText.getText().length());
+                saveData();
                 return true;
             case R.id.Add_Location:
                 new AlertDialog.Builder(NoteBookPages.this)
@@ -434,28 +456,28 @@ public class NoteBookPages extends AppCompatActivity {
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
-//    private void saveData()
-//    {
-//        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
-//        SharedPreferences.Editor editor = sharedPreferences.edit();
-//        Gson gson = new Gson();
-//        String json = gson.toJson(NoteBookActivity.noteBooks);
-//        editor.putString(NoteBookActivity.saveNoteBooksString,json);
-//
-//
-//        gson = new Gson();
-//        json = gson.toJson(NoteBookPages.noteBookPages);
-//        editor.putString(NoteBookActivity.saveNoteBooksPagesString, json);
-//
-//        gson = new Gson();
-//        json = gson.toJson(NoteBookActivity.noteBookPageTitlesList);
-//        editor.putString(NoteBookActivity.saveNoteBooksPageTitleListString, json);
-//
-//        editor.apply();
-//    }
+    private void saveData()
+    {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(NoteBookActivity.noteBooks);
+        editor.putString(NoteBookActivity.saveNoteBooksString,json);
 
-//    private void loadData()
-//    {
-//
-//    }
+
+        gson = new Gson();
+        json = gson.toJson(NoteBookActivity.noteBooksPages);
+        editor.putString(NoteBookActivity.saveNoteBooksPagesString, json);
+
+        gson = new Gson();
+        json = gson.toJson(NoteBookActivity.noteBookPageTitlesList);
+        editor.putString(NoteBookActivity.saveNoteBooksPageTitleListString, json);
+
+        gson = new Gson();
+        json = gson.toJson(NoteBookActivity.noteBookPagesImages);
+        editor.putString(NoteBookActivity.saveNoteBookPagePictures, json);
+
+        editor.apply();
+    }
+
 }

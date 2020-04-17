@@ -12,14 +12,18 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.media.ExifInterface;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -32,6 +36,7 @@ import android.text.style.ImageSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
 import android.text.util.Linkify;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -46,7 +51,14 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 
 import pub.devrel.easypermissions.AfterPermissionGranted;
 import pub.devrel.easypermissions.EasyPermissions;
@@ -59,7 +71,8 @@ public class PageActivity extends AppCompatActivity {
     private EditText editText;
     private String pageTitle;
     private int pageID;
-//    private PageImageList pageImageList;
+    private PageImageList pageImageList;
+    private ImageSpan[] checkSpans;
 
 
     @Override
@@ -71,15 +84,36 @@ public class PageActivity extends AppCompatActivity {
         Intent intent = getIntent();
         pageTitle = intent.getStringExtra("pageName");
         pageID = intent.getIntExtra("pageID", -1);
+        editText.setMovementMethod(LinkMovementMethod.getInstance());
         if(pageID == -1)
         {
             this.setTitle(pageTitle);
-//            pageImageList = new PageImageList();
+            pageImageList = new PageImageList();
+            checkSpans = new ImageSpan[0];
         }
         else
         {
             this.setTitle(NoteBookPages.noteBookPageTitles.get(pageID));
-            editText.setText(new SpannableString(NoteBookPages.noteBookPages.get(pageID)));
+            //editText.setText(new SpannableString(Html.fromHtml(NoteBookPages.noteBookPages.get(pageID))));
+            pageImageList = NoteBookPages.imagesForPage.get(pageID);
+            editText.setText(Html.fromHtml(NoteBookPages.noteBookPages.get(pageID)));
+            for(int i = 0; i <NoteBookPages.imagesForPage.get(pageID).pageImageList.size(); i++)
+            {
+                ImageSpan imageSpan = null;
+                try {
+//                imageSpan = new ImageSpan(this, decodeUri(this, selectedImage, 100));
+//                    editText.setText(new char[]{' '}, pageImageList.getStartIndex(i), 1);
+                        imageSpan = new ImageSpan(this, getCorrectlyOrientedImage(this, Uri.parse(pageImageList.getUri(i)), 700));
+                        SpannableString spannableString = new SpannableString(editText.getText());
+                        spannableString.setSpan(imageSpan, pageImageList.getStartIndex(i) , pageImageList.getStopIndex(i), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        editText.setText(spannableString);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            checkSpans = editText.getText().getSpans(0, editText.length(), ImageSpan.class);
         }
 
         editText.addTextChangedListener(new TextWatcher() {
@@ -107,17 +141,84 @@ public class PageActivity extends AppCompatActivity {
     @Override
     public void onBackPressed()
     {
+        ImageSpan [] toRemoveSpan = editText.getText().getSpans(0, editText.getText().length(), ImageSpan.class);
+        checkSpans(toRemoveSpan);
+        for(int i = 0; i < toRemoveSpan.length; i++)
+        {
+            int start = editText.getText().getSpanStart(toRemoveSpan[i]);
+            int end = editText.getText().getSpanEnd(toRemoveSpan[i]);
+            editText.getText().replace(start, end, " ");
+            editText.getText().removeSpan(toRemoveSpan[i]);
+            pageImageList.pageImageList.get(i).startIndex = start;
+            pageImageList.pageImageList.get(i).stopIndex = end;
+            //editText.getText().insert(pageImageList.getStartIndex(i), " ");
+        }
         if(pageID == -1)
         {
-            NoteBookPages.noteBookPages.add(editText.getText());
+            NoteBookPages.noteBookPages.add(Html.toHtml(editText.getText()));
             NoteBookPages.noteBookPageTitles.add(pageTitle);
+            NoteBookPages.imagesForPage.add(pageImageList);
             NoteBookPages.arrayAdapter.notifyDataSetChanged();
             super.onBackPressed();
         }
         else {
-            NoteBookPages.noteBookPages.set(pageID, editText.getText());
+            NoteBookPages.noteBookPages.set(pageID, Html.toHtml(editText.getText()));
+            NoteBookPages.imagesForPage.set(pageID, pageImageList);
             super.onBackPressed();
         }
+    }
+
+    private void checkSpans(ImageSpan[] arrayToCheck)
+    {
+        int indexToRemove = 0;
+        int lastIndex = 0;
+        int finalIndex;
+        ArrayList<PageImageList.Image> imagesToRemove = new ArrayList<>();
+        for(finalIndex = 0; finalIndex < arrayToCheck.length; finalIndex++)
+        {
+            if(!checkSpans[finalIndex].equals(arrayToCheck[finalIndex]))
+            {
+                if(indexToRemove == 0)
+                {
+                    indexToRemove = finalIndex;
+                    lastIndex = indexToRemove+1;
+                }
+                lastIndex++;
+            }
+            else if(checkSpans[finalIndex].equals(arrayToCheck[finalIndex]) && indexToRemove != 0)
+            {
+                for(int j = indexToRemove; j < lastIndex; j++)
+                {
+                    imagesToRemove.add(pageImageList.pageImageList.get(j));
+                }
+                indexToRemove = 0;
+            }
+        }
+        for(int i = finalIndex; i < checkSpans.length; i++)
+        {
+            imagesToRemove.add(pageImageList.pageImageList.get(i));
+        }
+        pageImageList.pageImageList.removeAll(imagesToRemove);
+    }
+
+    private ArrayList<String> createFinalString() {
+        ArrayList<String> returnList = new ArrayList<>();
+        if(pageImageList.pageImageList.size() == 0)
+        {
+            returnList.add(Html.toHtml(editText.getText()));
+        }
+        else {
+            int startIndex = 0;
+            for (int i = 0; i < pageImageList.pageImageList.size(); i++) {
+                String s = editText.getText().subSequence(0, pageImageList.getStartIndex(i)).toString();
+                returnList.add(Html.toHtml(new SpannableString(editText.getText().subSequence(startIndex, pageImageList.getStartIndex(i)))));
+                startIndex = pageImageList.getStopIndex(i)+1;
+            }
+            returnList.add(Html.toHtml(new SpannableString(editText.getText().subSequence(startIndex, editText.getText().length()))));
+        }
+
+        return returnList;
+
     }
 
 
@@ -310,8 +411,11 @@ public class PageActivity extends AppCompatActivity {
 
             ImageSpan imageSpan = null;
             try {
-                imageSpan = new ImageSpan(this, decodeUri(this, selectedImage, 100));
+//                imageSpan = new ImageSpan(this, decodeUri(this, selectedImage, 100));
+                imageSpan = new ImageSpan(this, getCorrectlyOrientedImage(this, selectedImage, 700));
             } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
                 e.printStackTrace();
             }
 //            Drawable d = imageSpan.getDrawable();
@@ -323,21 +427,23 @@ public class PageActivity extends AppCompatActivity {
             }
             else
             {
-                editText.append("\n" + " ");
+                editText.append("\r\n" + " ");
             }
             SpannableString spannableString = new SpannableString(editText.getText());
             spannableString.setSpan(imageSpan, editText.getText().length()-1 , editText.getText().length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             editText.setText(spannableString);
-            if(pageID == -1)
-            {
+            pageImageList.addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage.toString());
+//            if(pageID == -1)
+//            {
 //                pageImageList.addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage);
-            }
-            else
-            {
-//                NoteBookPages.noteBookPageImages.get(pageID).addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage);
-            }
-            editText.append("\n");
+//            }
+//            else
+//            {
+//                NoteBookPages.imagesForPage.get(pageID).addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage);
+//            }
+            editText.append("\r\n");
             editText.setSelection(editText.getText().length());
+            checkSpans = editText.getText().getSpans(0, editText.length(), ImageSpan.class);
         }
     }
 
@@ -352,16 +458,6 @@ public class PageActivity extends AppCompatActivity {
         }
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
-//    private void saveData()
-//    {
-//        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
-//        SharedPreferences.Editor editor = sharedPreferences.edit();
-//        Gson gson = new Gson();
-//        String json = gson.toJson(NoteBookActivity.noteBooks);
-//        editor.putString(NoteBookActivity.saveNoteBooksString,json);
-//        editor.apply();
-//    }
-
     private static Bitmap decodeUri(Context c, Uri uri, final int requiredSize)
             throws FileNotFoundException {
         BitmapFactory.Options o = new BitmapFactory.Options();
@@ -384,5 +480,119 @@ public class PageActivity extends AppCompatActivity {
         o2.inSampleSize = scale;
         return BitmapFactory.decodeStream(c.getContentResolver().openInputStream(uri), null, o2);
     }
+//    public static Bitmap modifyOrientation(Bitmap bitmap, String image_absolute_path) throws IOException {
+//        ExifInterface ei = new ExifInterface(image_absolute_path);
+//        int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+//
+//        switch (orientation) {
+//            case ExifInterface.ORIENTATION_ROTATE_90:
+//                return rotate(bitmap, 90);
+//
+//            case ExifInterface.ORIENTATION_ROTATE_180:
+//                return rotate(bitmap, 180);
+//
+//            case ExifInterface.ORIENTATION_ROTATE_270:
+//                return rotate(bitmap, 270);
+//
+//            case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
+//                return flip(bitmap, true, false);
+//
+//            case ExifInterface.ORIENTATION_FLIP_VERTICAL:
+//                return flip(bitmap, false, true);
+//
+//            default:
+//                return bitmap;
+//        }
+//    }
+//
+//    public static Bitmap rotate(Bitmap bitmap, float degrees) {
+//        Matrix matrix = new Matrix();
+//        matrix.postRotate(degrees);
+//        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+//    }
+//
+//    public static Bitmap flip(Bitmap bitmap, boolean horizontal, boolean vertical) {
+//        Matrix matrix = new Matrix();
+//        matrix.preScale(horizontal ? -1 : 1, vertical ? -1 : 1);
+//        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+//    }
+
+    public static int getOrientation(Context context, Uri photoUri) {
+
+        Cursor cursor = context.getContentResolver().query(photoUri,
+                new String[] { MediaStore.Images.ImageColumns.ORIENTATION }, null, null, null);
+
+        if (cursor == null || cursor.getCount() != 1) {
+            return 90;  //Assuming it was taken portrait
+        }
+
+        cursor.moveToFirst();
+        return cursor.getInt(0);
+    }
+
+    /**
+     * Rotates and shrinks as needed
+     */
+    public static Bitmap getCorrectlyOrientedImage(Context context, Uri photoUri, int maxWidth)
+            throws IOException {
+
+        InputStream is = context.getContentResolver().openInputStream(photoUri);
+        BitmapFactory.Options dbo = new BitmapFactory.Options();
+        dbo.inJustDecodeBounds = true;
+        BitmapFactory.decodeStream(is, null, dbo);
+        is.close();
+
+
+        int rotatedWidth, rotatedHeight;
+        int orientation = getOrientation(context, photoUri);
+
+        if (orientation == 90 || orientation == 270) {
+            Log.d("ImageUtil", "Will be rotated");
+            rotatedWidth = dbo.outHeight;
+            rotatedHeight = dbo.outWidth;
+        } else {
+            rotatedWidth = dbo.outWidth;
+            rotatedHeight = dbo.outHeight;
+        }
+
+        Bitmap srcBitmap;
+        is = context.getContentResolver().openInputStream(photoUri);
+        Log.d("ImageUtil", String.format("rotatedWidth=%s, rotatedHeight=%s, maxWidth=%s",
+                rotatedWidth, rotatedHeight, maxWidth));
+        if (rotatedWidth > maxWidth || rotatedHeight > maxWidth) {
+            float widthRatio = ((float) rotatedWidth) / ((float) maxWidth);
+            float heightRatio = ((float) rotatedHeight) / ((float) maxWidth);
+            float maxRatio = Math.max(widthRatio, heightRatio);
+            Log.d("ImageUtil", String.format("Shrinking. maxRatio=%s",
+                    maxRatio));
+
+            // Create the bitmap from file
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = (int) maxRatio;
+            srcBitmap = BitmapFactory.decodeStream(is, null, options);
+        } else {
+            Log.d("ImageUtil", String.format("No need for Shrinking. maxRatio=%s",
+                    1));
+
+            srcBitmap = BitmapFactory.decodeStream(is);
+            Log.d("ImageUtil", String.format("Decoded bitmap successful"));
+        }
+        ((InputStream) is).close();
+
+        /*
+         * if the orientation is not 0 (or -1, which means we don't know), we
+         * have to do a rotation.
+         */
+        if (orientation > 0) {
+            Matrix matrix = new Matrix();
+            matrix.postRotate(orientation);
+
+            srcBitmap = Bitmap.createBitmap(srcBitmap, 0, 0, srcBitmap.getWidth(),
+                    srcBitmap.getHeight(), matrix, true);
+        }
+
+        return srcBitmap;
+    }
+
 
 }

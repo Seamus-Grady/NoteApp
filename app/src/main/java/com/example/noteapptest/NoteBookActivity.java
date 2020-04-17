@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
+import android.text.SpannableString;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -39,15 +40,17 @@ import java.util.ArrayList;
 
 public class NoteBookActivity extends AppCompatActivity {
 
-    public static ArrayList<String> noteBooks = new ArrayList<>();
-    public static ArrayList<ArrayList<Editable>> noteBooksPages = new ArrayList<>();
-    public static ArrayList<ArrayList<String>> noteBookPageTitlesList = new ArrayList<>();
+    public static ArrayList<String> noteBooks; //= new ArrayList<>();
+    public static ArrayList<ArrayList<String>> noteBooksPages; //= new ArrayList<>();
+    public static ArrayList<ArrayList<String>> noteBookPageTitlesList; //= new ArrayList<>();
+    public static ArrayList<ArrayList<PageImageList>> noteBookPagesImages;
     static ArrayAdapter arrayAdapter;
     private ListView listView;
     private int STORAGE_PERMISSION_CODE = 1;
     public static String saveNoteBooksString = "notebook list";
     public static String saveNoteBooksPagesString = "notebook pages list";
     public static String saveNoteBooksPageTitleListString = "notebook page title string";
+    public static String saveNoteBookPagePictures = "notebook pictures";
     private static final int Access_Photos = 1;
     private static final String[] LOCATION_PERMS={
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -63,12 +66,10 @@ public class NoteBookActivity extends AppCompatActivity {
         verifyPermission();
 
         requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
-
-        //clearData();
         listView = findViewById(R.id.listView);
 
-        //loadData();
-        noteBooks = new ArrayList<>();
+        loadData();
+//        noteBooks = new ArrayList<>();
 
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBooks);
 
@@ -94,7 +95,9 @@ public class NoteBookActivity extends AppCompatActivity {
                         noteBooks.remove(position);
                         noteBookPageTitlesList.remove(position);
                         noteBooksPages.remove(position);
+                        noteBookPagesImages.remove(position);
                         arrayAdapter.notifyDataSetChanged();
+                        saveData();
                     }
                 }).setNegativeButton("No", null)
                         .show();
@@ -118,58 +121,74 @@ public class NoteBookActivity extends AppCompatActivity {
             case R.id.Add_NoteBook:
                 Intent intent = new Intent(getApplicationContext(), NoteBookPages.class);
                 startActivity(intent);
+                saveData();
                 return true;
+            case R.id.Delete_Notebooks:
+                new AlertDialog.Builder(NoteBookActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?")
+                        .setMessage("Do you want to delete all your notebooks?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        clearData();
+                        loadData();
+                        arrayAdapter.clear();
+                        arrayAdapter.notifyDataSetChanged();
+                    }
+                }).setNegativeButton("No", null)
+                        .show();
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-//    public void saveData()
-//    {
-//        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
-//        SharedPreferences.Editor editor = sharedPreferences.edit();
-//        Gson gson = new Gson();
-//        String json = gson.toJson(noteBooks);
-//        editor.putString(saveNoteBooksString,json);
-//
-//        editor.apply();
-//
-//    }
-//    private void loadData()
-//    {
-//        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
-//        Gson gson = new Gson();
-//        String json = sharedPreferences.getString(saveNoteBooksString,null);
-//        Type type = new TypeToken<ArrayList<String>>() {}.getType();
-//        noteBooks = gson.fromJson(json,type);
-//        if(noteBooks ==null){
-//            noteBooks=new ArrayList<>();
-//        }
-//
-//        json = sharedPreferences.getString(saveNoteBooksPagesString, null);
-//        type = new TypeToken<ArrayList<String>>(){}.getType();
-//        JsonArray test = gson.fromJson(json, JsonArray.class);
-////        noteBooksPages = gson.fromJson(json, type);
-//        if(test == null)
-//        {
-//            noteBooksPages = new ArrayList<>();
-//        }
-//        else
-//        {
-//            ArrayList<Editable> test1 = new ArrayList<>();
-//            for(int i = 0; i < test.size(); i++)
-//            {
-//                Editable test2 = (Editable) test.get(i);
-//            }
-//        }
-//
-//        json = sharedPreferences.getString(saveNoteBooksPageTitleListString, null);
-//        type = new TypeToken<ArrayList<ArrayList<String>>>(){}.getType();
-//        noteBookPageTitlesList = gson.fromJson(json, type);
-//        if(noteBookPageTitlesList == null)
-//        {
-//            noteBookPageTitlesList = new ArrayList<>();
-//        }
-//    }
+    public void saveData()
+    {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(noteBooks);
+        editor.putString(saveNoteBooksString,json);
+
+        editor.apply();
+
+    }
+    private void loadData()
+    {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+        Gson gson = new Gson();
+        String json = sharedPreferences.getString(saveNoteBooksString,null);
+        Type type = new TypeToken<ArrayList<String>>() {}.getType();
+        noteBooks = gson.fromJson(json,type);
+        if(noteBooks ==null){
+            noteBooks=new ArrayList<>();
+        }
+
+        gson = new Gson();
+        json = sharedPreferences.getString(saveNoteBooksPagesString, null);
+        type = new TypeToken<ArrayList<ArrayList<String>>>(){}.getType();
+        noteBooksPages = gson.fromJson(json, type);
+        if(noteBooksPages == null)
+        {
+            noteBooksPages = new ArrayList<>();
+        }
+
+        gson = new Gson();
+        json = sharedPreferences.getString(saveNoteBooksPageTitleListString, null);
+        type = new TypeToken<ArrayList<ArrayList<String>>>(){}.getType();
+        noteBookPageTitlesList = gson.fromJson(json, type);
+        if(noteBookPageTitlesList == null)
+        {
+            noteBookPageTitlesList = new ArrayList<>();
+        }
+
+        gson = new Gson();
+        json = sharedPreferences.getString(saveNoteBookPagePictures, null);
+        type = new TypeToken<ArrayList<ArrayList<PageImageList>>>(){}.getType();
+        noteBookPagesImages = gson.fromJson(json, type);
+        if(noteBookPagesImages == null)
+        {
+            noteBookPagesImages = new ArrayList<>();
+        }
+    }
 
     private void clearData()
     {

@@ -13,7 +13,7 @@ public class PageImageList {
     }
 
 
-    public void addAnImage(int start, int stop, Uri uri)
+    public void addAnImage(int start, int stop, String uri)
     {
         Image currentImageToAdd = new Image(start, stop, uri);
         pageImageList.add(currentImageToAdd);
@@ -29,21 +29,21 @@ public class PageImageList {
         return pageImageList.get(position).stopIndex;
     }
 
-    public Uri getUri(int position)
+    public String getUri(int position)
     {
-        return pageImageList.get(position).uri;
+        return pageImageList.get(position).uriPath;
     }
 
-    private class Image{
+    public class Image{
         public int startIndex;
         public int stopIndex;
-        public Uri uri;
+        public String uriPath;
 
-        public Image(int start, int stop, Uri currentUri)
+        public Image(int start, int stop, String currentUri)
         {
             startIndex = start;
             stopIndex = stop;
-            uri = currentUri;
+            uriPath = currentUri;
         }
     }
 }
