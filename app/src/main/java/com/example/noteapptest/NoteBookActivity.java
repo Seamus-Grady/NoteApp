@@ -11,6 +11,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -44,6 +45,7 @@ public class NoteBookActivity extends AppCompatActivity {
     public static ArrayList<ArrayList<String>> noteBooksPages; //= new ArrayList<>();
     public static ArrayList<ArrayList<String>> noteBookPageTitlesList; //= new ArrayList<>();
     public static ArrayList<ArrayList<PageImageList>> noteBookPagesImages;
+    public static ArrayList<Double[]> locations;
     static ArrayAdapter arrayAdapter;
     private ListView listView;
     private int STORAGE_PERMISSION_CODE = 1;
@@ -52,6 +54,7 @@ public class NoteBookActivity extends AppCompatActivity {
     public static String saveNoteBooksPageTitleListString = "notebook page title string";
     public static String saveNoteBookPagePictures = "notebook pictures";
     private static final int Access_Photos = 1;
+
     private static final String[] LOCATION_PERMS={
             Manifest.permission.ACCESS_FINE_LOCATION
 };
@@ -96,6 +99,7 @@ public class NoteBookActivity extends AppCompatActivity {
                         noteBookPageTitlesList.remove(position);
                         noteBooksPages.remove(position);
                         noteBookPagesImages.remove(position);
+                        locations.remove(position);
                         arrayAdapter.notifyDataSetChanged();
                         saveData();
                     }
@@ -105,6 +109,75 @@ public class NoteBookActivity extends AppCompatActivity {
                 return true;
             }
         });
+        GPSTracker tracker = new GPSTracker(getApplicationContext());
+        ArrayList<String> tempNoteBooks = new ArrayList<>();
+        ArrayList<ArrayList<String>> tempNotePageTitlesList = new ArrayList<>();
+        ArrayList<ArrayList<String>> tempNotePages = new ArrayList<>();
+        ArrayList<ArrayList<PageImageList>> tempNotePagesImages = new ArrayList<>();
+        ArrayList<Double[]> tempLocs = new ArrayList<>();
+        int counter = 0;
+        for (String s : noteBooks)
+        {
+            if (!(locations.get(counter)[0] == 181.0))
+            {
+                if (tracker.location != null)
+                {
+                    Location mLocation = tracker.getLocation();
+
+                    Double latitude = mLocation.getLatitude();
+                    Double longitude = mLocation.getLongitude();
+
+                    if (distance(latitude,longitude,locations.get(counter)[0],locations.get(counter)[1]) <= 1)
+                    {
+                        tempNoteBooks.add(noteBooks.get(counter));
+                        tempNotePageTitlesList.add(noteBookPageTitlesList.get(counter));
+                        tempNotePages.add(noteBooksPages.get(counter));
+                        tempNotePagesImages.add(noteBookPagesImages.get(counter));
+                        tempLocs.add(locations.get(counter));
+
+
+                        noteBooks.remove(counter);
+                        noteBookPageTitlesList.remove(counter);
+                        noteBooksPages.remove(counter);
+                        noteBookPagesImages.remove(counter);
+                        locations.remove(counter);
+                        arrayAdapter.notifyDataSetChanged();
+                        saveData();
+
+                        //Also part of the test.
+                        noteBooks.add(0,tempNoteBooks.get(0));
+                        noteBookPageTitlesList.add(0,tempNotePageTitlesList.get(0));
+                        noteBooksPages.add(0,tempNotePages.get(0));
+                        noteBookPagesImages.add(0,tempNotePagesImages.get(0));
+                        locations.add(0,tempLocs.get(0));
+                        arrayAdapter.notifyDataSetChanged();
+                        saveData();
+                        tempNoteBooks.clear();
+                        tempNotePages.clear();
+                        tempNotePagesImages.clear();
+                        tempNotePageTitlesList.clear();
+                        tempLocs.clear();
+
+                    }
+                }
+            }
+            counter++;
+
+        }
+    }
+
+    private static double distance(double lat1, double lon1, double lat2, double lon2) {
+        if ((lat1 == lat2) && (lon1 == lon2)) {
+            return 0;
+        }
+        else {
+            double theta = lon1 - lon2;
+            double dist = Math.sin(Math.toRadians(lat1)) * Math.sin(Math.toRadians(lat2)) + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) * Math.cos(Math.toRadians(theta));
+            dist = Math.acos(dist);
+            dist = Math.toDegrees(dist);
+            dist = dist * 60 * 1.1515;
+            return (dist);
+        }
     }
 
     @Override
@@ -121,6 +194,8 @@ public class NoteBookActivity extends AppCompatActivity {
             case R.id.Add_NoteBook:
                 Intent intent = new Intent(getApplicationContext(), NoteBookPages.class);
                 startActivity(intent);
+                Double[] temp = {181.0,181.0};
+                locations.add(temp);
                 saveData();
                 return true;
             case R.id.Delete_Notebooks:
