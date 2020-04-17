@@ -46,6 +46,7 @@ public class NoteBookPages extends AppCompatActivity {
     private int STORAGE_PERMISSION_CODE = 1;
     private double latitude;
     private double longitude;
+    public static ArrayList<double[]> locationTags = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,17 +80,13 @@ public class NoteBookPages extends AppCompatActivity {
 
         }
 
-        if (latitude != 181.0)
+        if (latitude != 181.0 && longitude != 181.0)
         {
-            Toast toast = Toast.makeText(getApplicationContext(), "Latitude: " + latitude, Toast.LENGTH_SHORT);
-            toast.show();
+            double[] newLoc = new double[2];
+            newLoc[0] = latitude;
+            newLoc[1] = longitude;
+            locationTags.add(newLoc);
         }
-        if (longitude != 181.0)
-        {
-            Toast toast = Toast.makeText(getApplicationContext(), "Longitude: " + longitude, Toast.LENGTH_SHORT);
-            toast.show();
-        }
-
 
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPageTitles);
         listView.setAdapter(arrayAdapter);
