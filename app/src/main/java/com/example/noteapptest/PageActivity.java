@@ -20,6 +20,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -28,6 +29,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.AbsoluteSizeSpan;
+import android.text.style.CharacterStyle;
 import android.text.style.ImageSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
@@ -169,6 +171,8 @@ public class PageActivity extends AppCompatActivity {
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        // TODO: REMOVE THIS AFTER TESTING
+                        Test();
                         dialog.cancel();
                     }
                 });
@@ -384,6 +388,15 @@ public class PageActivity extends AppCompatActivity {
         BitmapFactory.Options o2 = new BitmapFactory.Options();
         o2.inSampleSize = scale;
         return BitmapFactory.decodeStream(c.getContentResolver().openInputStream(uri), null, o2);
+    }
+
+    private void Test()
+    {
+        String s = Html.toHtml(editText.getText());
+
+        SpannableString ss = new SpannableString(Html.fromHtml(s));
+
+        editText.setText(ss);
     }
 
 }
