@@ -1,6 +1,10 @@
 package com.example.noteapptest;
 
+import android.content.Context;
+
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import static org.junit.Assert.*;
 
@@ -11,7 +15,20 @@ import static org.junit.Assert.*;
  */
 public class ExampleUnitTest {
     @Test
-    public void addition_isCorrect() {
-        assertEquals(4, 2 + 2);
+    public void distanceTest1()
+    {
+        assertEquals(NoteBookActivity.distance(0.0, 0.0, 0.0, 0.0), 0.0, 0.0);
+    }
+
+    @Test
+    public void distanceTest2()
+    {
+        assertTrue(NoteBookActivity.distance(0.000000001, 0.000000001, 0.0, 0.0) < 1.0);
+    }
+
+    @Test
+    public void distanceTest3()
+    {
+        assertTrue(NoteBookActivity.distance(1.0, 1.0, 0.0, 0.0) > 1.0);
     }
 }
