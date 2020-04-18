@@ -137,20 +137,19 @@ public class NoteBookActivity extends AppCompatActivity {
                         tempNotePagesImages.add(noteBookPagesImages.get(i));
                         tempLocs.add(locations.get(i));
 
-
                         noteBooks.remove(i);
                         noteBookPageTitlesList.remove(i);
                         noteBooksPages.remove(i);
                         noteBookPagesImages.remove(i);
                         locations.remove(i);
                         arrayAdapter.notifyDataSetChanged();
-                        saveData();
+//                        saveData();
 
-                        noteBooks.add(0,tempNoteBooks.get(0));
-                        noteBookPageTitlesList.add(0,tempNotePageTitlesList.get(0));
-                        noteBooksPages.add(0,tempNotePages.get(0));
-                        noteBookPagesImages.add(0,tempNotePagesImages.get(0));
-                        locations.add(0,tempLocs.get(0));
+                        noteBooks.add(0, tempNoteBooks.get(0));
+                        noteBookPageTitlesList.add(0, tempNotePageTitlesList.get(0));
+                        noteBooksPages.add(0, tempNotePages.get(0));
+                        noteBookPagesImages.add(0, tempNotePagesImages.get(0));
+                        locations.add(0, tempLocs.get(0));
                         arrayAdapter.notifyDataSetChanged();
                         saveData();
                         tempNoteBooks.clear();
@@ -159,6 +158,13 @@ public class NoteBookActivity extends AppCompatActivity {
                         tempNotePageTitlesList.clear();
                         tempLocs.clear();
 
+                        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        Gson gson = new Gson();
+                        String json = gson.toJson(NoteBookActivity.locations);
+                        editor.putString(NoteBookActivity.saveLocations, json);
+
+                        editor.apply();
                     }
                 }
                 else
