@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.text.HtmlCompat;
 
 import android.Manifest;
 import android.app.Activity;
@@ -21,9 +22,11 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.ExifInterface;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.Html;
+import android.text.InputFilter;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -73,7 +76,7 @@ public class PageActivity extends AppCompatActivity {
     private String pageTitle;
     private int pageID;
     private PageImageList pageImageList;
-    private ImageSpan[] checkSpans;
+    private ImageSpan[] checkSpan;
 
 
     @Override
@@ -90,20 +93,24 @@ public class PageActivity extends AppCompatActivity {
         {
             this.setTitle(pageTitle);
             pageImageList = new PageImageList();
-            checkSpans = new ImageSpan[0];
+            checkSpan = new ImageSpan[0];
         }
         else
         {
             this.setTitle(NoteBookPages.noteBookPageTitles.get(pageID));
             //editText.setText(new SpannableString(Html.fromHtml(NoteBookPages.noteBookPages.get(pageID))));
             pageImageList = NoteBookPages.imagesForPage.get(pageID);
-            editText.setText(Html.fromHtml(NoteBookPages.noteBookPages.get(pageID)));
+            editText.setText(HtmlCompat.fromHtml(NoteBookPages.noteBookPages.get(pageID), HtmlCompat.FROM_HTML_SEPARATOR_LINE_BREAK_PARAGRAPH));//.replace("<br/>", "\n")));
             for(int i = 0; i <NoteBookPages.imagesForPage.get(pageID).pageImageList.size(); i++)
             {
                 ImageSpan imageSpan = null;
                 try {
 //                imageSpan = new ImageSpan(this, decodeUri(this, selectedImage, 100));
 //                    editText.setText(new char[]{' '}, pageImageList.getStartIndex(i), 1);
+//                    if(editText.getText().charAt(pageImageList.getStartIndex(i)) != '$') {
+//                        pageImageList.pageImageList.get(i).startIndex = pageImageList.pageImageList.get(i).startIndex -2;
+//                        pageImageList.pageImageList.get(i).stopIndex = pageImageList.pageImageList.get(i).stopIndex -2;
+//                    }
                         imageSpan = new ImageSpan(this, getCorrectlyOrientedImage(this, Uri.parse(pageImageList.getUri(i)), 700));
                         SpannableString spannableString = new SpannableString(editText.getText());
                         spannableString.setSpan(imageSpan, pageImageList.getStartIndex(i) , pageImageList.getStopIndex(i), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -114,7 +121,8 @@ public class PageActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
-            checkSpans = editText.getText().getSpans(0, editText.length(), ImageSpan.class);
+
+            checkSpan = editText.getText().getSpans(0, editText.getText().length(), ImageSpan.class);
         }
 
         editText.addTextChangedListener(new TextWatcher() {
@@ -128,6 +136,9 @@ public class PageActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
+                ImageSpan[] arrayToCheck = editText.getText().getSpans(0, editText.getText().length(), ImageSpan.class);
+                checkSpans(arrayToCheck);
+                checkSpan = editText.getText().getSpans(0, editText.getText().length(), ImageSpan.class);
             }
         });
     }
@@ -140,86 +151,50 @@ public class PageActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onBackPressed()
-    {
-        ImageSpan [] toRemoveSpan = editText.getText().getSpans(0, editText.getText().length(), ImageSpan.class);
-        checkSpans(toRemoveSpan);
-        for(int i = 0; i < toRemoveSpan.length; i++)
-        {
-            int start = editText.getText().getSpanStart(toRemoveSpan[i]);
-            int end = editText.getText().getSpanEnd(toRemoveSpan[i]);
-            editText.getText().replace(start, end, " ");
-            editText.getText().removeSpan(toRemoveSpan[i]);
+    public void onBackPressed() {
+//        ImageSpan[] toRemoveSpan = editText.getText().getSpans(0, editText.getText().length(), ImageSpan.class);
+//        checkSpans(toRemoveSpan);
+        for (int i = 0; i < checkSpan.length; i++) {
+            int start = editText.getText().getSpanStart(checkSpan[i]);
+            int end = editText.getText().getSpanEnd(checkSpan[i]);
             pageImageList.pageImageList.get(i).startIndex = start;
             pageImageList.pageImageList.get(i).stopIndex = end;
-            //editText.getText().insert(pageImageList.getStartIndex(i), " ");
+            editText.getText().removeSpan(checkSpan[i]);
         }
-        if(pageID == -1)
-        {
-            NoteBookPages.noteBookPages.add(Html.toHtml(editText.getText()));
+        if (pageID == -1) {
+            NoteBookPages.noteBookPages.add(HtmlCompat.toHtml(editText.getText(), HtmlCompat.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL));
             NoteBookPages.noteBookPageTitles.add(pageTitle);
             NoteBookPages.imagesForPage.add(pageImageList);
             NoteBookPages.arrayAdapter.notifyDataSetChanged();
             super.onBackPressed();
-        }
-        else {
-            NoteBookPages.noteBookPages.set(pageID, Html.toHtml(editText.getText()));
+        } else {
+            NoteBookPages.noteBookPages.set(pageID, HtmlCompat.toHtml(editText.getText(), HtmlCompat.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL));
             NoteBookPages.imagesForPage.set(pageID, pageImageList);
             super.onBackPressed();
         }
     }
 
+
     private void checkSpans(ImageSpan[] arrayToCheck)
     {
-        int indexToRemove = 0;
-        int lastIndex = 0;
-        int finalIndex;
         ArrayList<PageImageList.Image> imagesToRemove = new ArrayList<>();
-        for(finalIndex = 0; finalIndex < arrayToCheck.length; finalIndex++)
+        for(int i = 0; i < checkSpan.length; i++)
         {
-            if(!checkSpans[finalIndex].equals(arrayToCheck[finalIndex]))
+
+            boolean picToRemove = false;
+            for(int j = 0; j < arrayToCheck.length; j++)
             {
-                if(indexToRemove == 0)
+                if(arrayToCheck[j].equals(checkSpan[i]))
                 {
-                    indexToRemove = finalIndex;
-                    lastIndex = indexToRemove+1;
+                    picToRemove = true;
                 }
-                lastIndex++;
             }
-            else if(checkSpans[finalIndex].equals(arrayToCheck[finalIndex]) && indexToRemove != 0)
+            if(!picToRemove)
             {
-                for(int j = indexToRemove; j < lastIndex; j++)
-                {
-                    imagesToRemove.add(pageImageList.pageImageList.get(j));
-                }
-                indexToRemove = 0;
+                imagesToRemove.add(pageImageList.pageImageList.get(i));
             }
-        }
-        for(int i = finalIndex; i < checkSpans.length; i++)
-        {
-            imagesToRemove.add(pageImageList.pageImageList.get(i));
         }
         pageImageList.pageImageList.removeAll(imagesToRemove);
-    }
-
-    private ArrayList<String> createFinalString() {
-        ArrayList<String> returnList = new ArrayList<>();
-        if(pageImageList.pageImageList.size() == 0)
-        {
-            returnList.add(Html.toHtml(editText.getText()));
-        }
-        else {
-            int startIndex = 0;
-            for (int i = 0; i < pageImageList.pageImageList.size(); i++) {
-                String s = editText.getText().subSequence(0, pageImageList.getStartIndex(i)).toString();
-                returnList.add(Html.toHtml(new SpannableString(editText.getText().subSequence(startIndex, pageImageList.getStartIndex(i)))));
-                startIndex = pageImageList.getStopIndex(i)+1;
-            }
-            returnList.add(Html.toHtml(new SpannableString(editText.getText().subSequence(startIndex, editText.getText().length()))));
-        }
-
-        return returnList;
-
     }
 
 
@@ -256,7 +231,7 @@ public class PageActivity extends AppCompatActivity {
                         String newLinkText = "" + linkText.getText();
                         String newLinkURL = "" + linkURL.getText();
 
-                        editText.append("\r\n" + newLinkText + ": ");
+                        editText.append("\n" + newLinkText + ": ");
 
                         editText.setMovementMethod(LinkMovementMethod.getInstance());
                         SpannableString ss = new SpannableString(newLinkURL);
@@ -320,39 +295,11 @@ public class PageActivity extends AppCompatActivity {
                 underlineCheck.setText("Underline");
                 etLayout.addView(underlineCheck);
 
-                String[] sizes = {"Tiny", "Small", "Normal", "Large", "Massive"};
-                final Spinner spinner = new Spinner(this);
-                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, sizes);
-                arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinner.setAdapter(arrayAdapter);
-                spinner.setSelection(2);
-                etLayout.addView(spinner);
-
                 etBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if (!selectedText.isEmpty())
                         {
-                            if (spinner.getSelectedItem().equals("Tiny"))
-                            {
-                                selected.setSpan(new AbsoluteSizeSpan(10, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            }
-                            else if (spinner.getSelectedItem().equals("Small"))
-                            {
-                                selected.setSpan(new AbsoluteSizeSpan(12, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            }
-                            else if (spinner.getSelectedItem().equals("Normal"))
-                            {
-                                selected.setSpan(new AbsoluteSizeSpan(18, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            }
-                            else if (spinner.getSelectedItem().equals("Large"))
-                            {
-                                selected.setSpan(new AbsoluteSizeSpan(24, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            }
-                            else if (spinner.getSelectedItem().equals("Massive"))
-                            {
-                                selected.setSpan(new AbsoluteSizeSpan(36, true), 0, selected.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-                            }
 
                             if (boldCheck.isChecked())
                             {
@@ -421,32 +368,63 @@ public class PageActivity extends AppCompatActivity {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-//            Drawable d = imageSpan.getDrawable();
-//            d.setBounds(0,0, d.getIntrinsicWidth(), d.getIntrinsicHeight());
-//            imageSpan = new ImageSpan(d, ImageSpan.ALIGN_BASELINE);
-            if(editText.getText().length() == 0|| editText.getText().toString().endsWith("\n"))
-            {
-                editText.append(" ");
+            int startSelection = editText.getSelectionStart();
+            int endSelectiion = editText.getSelectionEnd();
+            if(startSelection == -1) {
+                if (editText.getText().length() == 0 || editText.getText().toString().endsWith("\n")) {
+                    editText.append("$");
+                } else {
+                    editText.append("\n" + "$");
+                }
+                SpannableString spannableString = new SpannableString(editText.getText());
+                spannableString.setSpan(imageSpan, editText.getText().length() - 1, editText.getText().length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                editText.setText(spannableString);
+                pageImageList.addAnImage(editText.getText().length() - 1, editText.getText().length(), selectedImage.toString());
+                editText.append("\n");
             }
             else
             {
-                editText.append("\r\n" + " ");
+                if(endSelectiion - startSelection != 0)
+                {
+                    if (editText.getText().length() == 0 || endSelectiion < editText.getText().length() &&editText.getText().charAt(endSelectiion) == '\n') {
+                        editText.getText().insert(endSelectiion, "$\n");
+                        SpannableString spannableString = new SpannableString(editText.getText());
+                        spannableString.setSpan(imageSpan, endSelectiion, endSelectiion+1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        editText.setText(spannableString);
+                        pageImageList.addAnImage(endSelectiion, endSelectiion +1, selectedImage.toString());
+                    } else {
+                        editText.getText().insert(endSelectiion, "\n$\n");
+                        SpannableString spannableString = new SpannableString(editText.getText());
+                        spannableString.setSpan(imageSpan, endSelectiion+1, endSelectiion+2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        editText.setText(spannableString);
+                        pageImageList.addAnImage(endSelectiion+1, endSelectiion +2, selectedImage.toString());
+                    }
+
+
+
+                }
+                else
+                {
+                    if (editText.getText().length() == 0 || startSelection < editText.getText().length() && editText.getText().charAt(startSelection) == '\n') {
+                        editText.getText().insert(startSelection, "$\n");
+                        SpannableString spannableString = new SpannableString(editText.getText());
+                        spannableString.setSpan(imageSpan, startSelection, startSelection+1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        editText.setText(spannableString);
+                        pageImageList.addAnImage(startSelection, startSelection +1, selectedImage.toString());
+                    } else {
+                        editText.getText().insert(startSelection, "\n$\n");
+                        SpannableString spannableString = new SpannableString(editText.getText());
+                        spannableString.setSpan(imageSpan, startSelection+1, startSelection+2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        editText.setText(spannableString);
+                        pageImageList.addAnImage(startSelection+1, startSelection +2, selectedImage.toString());
+                    }
+
+                }
             }
-            SpannableString spannableString = new SpannableString(editText.getText());
-            spannableString.setSpan(imageSpan, editText.getText().length()-1 , editText.getText().length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            editText.setText(spannableString);
-            pageImageList.addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage.toString());
-//            if(pageID == -1)
-//            {
-//                pageImageList.addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage);
-//            }
-//            else
-//            {
-//                NoteBookPages.imagesForPage.get(pageID).addAnImage(editText.getText().length()-1, editText.getText().length(), selectedImage);
-//            }
-            editText.append("\r\n");
             editText.setSelection(editText.getText().length());
-            checkSpans = editText.getText().getSpans(0, editText.length(), ImageSpan.class);
+            checkSpan = editText.getText().getSpans(0, editText.getText().length(), ImageSpan.class);
+//            ImageSpan[] arrayToDelete = editText.getText().getSpans(0, editText.length(), ImageSpan.class);
+//            checkSpans(arrayToDelete);
         }
     }
 
@@ -483,42 +461,6 @@ public class PageActivity extends AppCompatActivity {
         o2.inSampleSize = scale;
         return BitmapFactory.decodeStream(c.getContentResolver().openInputStream(uri), null, o2);
     }
-//    public static Bitmap modifyOrientation(Bitmap bitmap, String image_absolute_path) throws IOException {
-//        ExifInterface ei = new ExifInterface(image_absolute_path);
-//        int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
-//
-//        switch (orientation) {
-//            case ExifInterface.ORIENTATION_ROTATE_90:
-//                return rotate(bitmap, 90);
-//
-//            case ExifInterface.ORIENTATION_ROTATE_180:
-//                return rotate(bitmap, 180);
-//
-//            case ExifInterface.ORIENTATION_ROTATE_270:
-//                return rotate(bitmap, 270);
-//
-//            case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-//                return flip(bitmap, true, false);
-//
-//            case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-//                return flip(bitmap, false, true);
-//
-//            default:
-//                return bitmap;
-//        }
-//    }
-//
-//    public static Bitmap rotate(Bitmap bitmap, float degrees) {
-//        Matrix matrix = new Matrix();
-//        matrix.postRotate(degrees);
-//        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-//    }
-//
-//    public static Bitmap flip(Bitmap bitmap, boolean horizontal, boolean vertical) {
-//        Matrix matrix = new Matrix();
-//        matrix.preScale(horizontal ? -1 : 1, vertical ? -1 : 1);
-//        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-//    }
 
     public static int getOrientation(Context context, Uri photoUri) {
 

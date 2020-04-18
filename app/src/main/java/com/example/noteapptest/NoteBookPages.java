@@ -46,6 +46,9 @@ public class NoteBookPages extends AppCompatActivity {
     private boolean defaultState;
     private String defaultTitle;
     private int STORAGE_PERMISSION_CODE = 1;
+    private double latitude;
+    private double longitude;
+    public static ArrayList<double[]> locationTags = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +56,19 @@ public class NoteBookPages extends AppCompatActivity {
         setContentView(R.layout.activity_note_book_pages);
         listView = findViewById(R.id.noteBookPages);
         editText = findViewById(R.id.noteBookName);
-        Intent intent = getIntent();
-        noteBookID = intent.getIntExtra("noteBookID", -1);
-
+        //LoadData
+        if(savedInstanceState != null)
+        {
+            noteBookID = savedInstanceState.getInt("noteBookID");
+            latitude = savedInstanceState.getDouble("lattitude");
+            longitude = savedInstanceState.getDouble("longitude");
+        }
+        else {
+            Intent intent = getIntent();
+            noteBookID = intent.getIntExtra("noteBookID", -1);
+            latitude = intent.getDoubleExtra("latitude", 181.0);
+            longitude = intent.getDoubleExtra("longitude", 181.0);
+        }
         if(noteBookID != -1)
         {
             //LoadData();//////figuring out what to load here/////////////
@@ -69,12 +82,21 @@ public class NoteBookPages extends AppCompatActivity {
         }
         else
         {
+            this.setTitle("NoteBook");
             defaultTitle = "Title";
             noteBookPageTitles = new ArrayList<>();
             noteBookPages = new ArrayList<>();
             imagesForPage = new ArrayList<>();
             defaultState = true;
 
+        }
+
+        if (latitude != 181.0 && longitude != 181.0)
+        {
+            double[] newLoc = new double[2];
+            newLoc[0] = latitude;
+            newLoc[1] = longitude;
+            locationTags.add(newLoc);
         }
 
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBookPageTitles);
@@ -129,24 +151,7 @@ public class NoteBookPages extends AppCompatActivity {
                 Button deletePage = new Button(NoteBookPages.this);
                 deletePage.setText("Delete Page");
 
-                deletePage.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        new AlertDialog.Builder(NoteBookPages.this)
-                                .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?")
-                                .setMessage("Do you want to delete this page?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                NoteBookPages.noteBookPageTitles.remove(position);
-                                imagesForPage.remove(position);
-                                arrayAdapter.notifyDataSetChanged();
-                                saveData();
-                            }
-                        }).setNegativeButton("No", null)
-                                .show();
 
-                    }
-                });
 
                 etLayout.addView(deletePage);
 
@@ -160,9 +165,67 @@ public class NoteBookPages extends AppCompatActivity {
 
                 settings.setView(etLayout);
 
-                AlertDialog settingsDialog = settings.create();
+                final AlertDialog settingsDialog = settings.create();
 
                 settingsDialog.show();
+
+                deletePage.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        new AlertDialog.Builder(NoteBookPages.this)
+                                .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?")
+                                .setMessage("Do you want to delete this page?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                NoteBookPages.noteBookPageTitles.remove(position);
+                                imagesForPage.remove(position);
+                                arrayAdapter.notifyDataSetChanged();
+                                saveData();
+                                settingsDialog.hide();
+                            }
+                        }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                settingsDialog.hide();
+                            }
+                        })
+                                .show();
+
+                    }
+                });
+
+                changeTitle.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(NoteBookPages.this);
+                        builder.setTitle("New Page Name");
+
+                        final EditText input = new EditText(NoteBookPages.this);
+                        input.setInputType(InputType.TYPE_CLASS_TEXT);
+                        builder.setView(input);
+
+                        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                NoteBookPages.noteBookPageTitles.set(position, input.getText().toString());
+                                arrayAdapter.notifyDataSetChanged();
+                                settingsDialog.hide();
+                            }
+                        });
+
+                        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                settingsDialog.hide();
+                            }
+                        });
+                        builder.show();
+
+
+
+                    }
+                });
                 return  true;
 
             }
@@ -221,6 +284,14 @@ public class NoteBookPages extends AppCompatActivity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("noteBookID", noteBookID);
+        outState.putDouble("lattitude", latitude);
+        outState.putDouble("longitude", longitude);
+    }
+
+    @Override
     public void onBackPressed() {
         if(!editText.getText().toString().equals(defaultTitle))
         {
@@ -252,7 +323,7 @@ public class NoteBookPages extends AppCompatActivity {
                 public void onClick(DialogInterface dialog, int which) {
                     if(noteBookID == -1)
                     {
-                        NoteBookActivity.noteBooks.add("");
+                        NoteBookActivity.noteBooks.add("Untitled Notebook");
                         NoteBookActivity.noteBooksPages.add(noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
                         NoteBookActivity.noteBookPagesImages.add(imagesForPage);
@@ -276,7 +347,7 @@ public class NoteBookPages extends AppCompatActivity {
                 if(defaultState)
                 {
                     if (NoteBookActivity.noteBooksPages.size()-1 != noteBookID || noteBookID == -1) {
-                        NoteBookActivity.noteBooks.add("");
+                        NoteBookActivity.noteBooks.add("Untitled Notebook");
                         NoteBookActivity.noteBooksPages.add(noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
                         NoteBookActivity.noteBookPagesImages.add(imagesForPage);
@@ -352,8 +423,8 @@ public class NoteBookPages extends AppCompatActivity {
                 {
                     if(editText.getText().toString().equals("Title"))
                     {
-                        NoteBookActivity.noteBooks.add("");
-                        defaultTitle = "";
+                        NoteBookActivity.noteBooks.add("Untitled Notebook");
+                        defaultTitle = "Untitled Notebook";
                     }
                     else
                     {
@@ -400,7 +471,7 @@ public class NoteBookPages extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         Intent intent = new Intent(getApplicationContext(), PageActivity.class);
-                        intent.putExtra("pageName", "");
+                        intent.putExtra("pageName", "Untitled Page");
                         startActivity(intent);
                         findViewById(R.id.noteBookPageLayoutActivity).requestFocus();
                         hideAKeyboard(NoteBookPages.this);

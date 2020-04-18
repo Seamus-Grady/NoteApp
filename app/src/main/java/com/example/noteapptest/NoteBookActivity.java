@@ -258,8 +258,8 @@ public class NoteBookActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         clearData();
                         loadData();
-                        arrayAdapter.clear();
-                        arrayAdapter.notifyDataSetChanged();
+                        arrayAdapter = new ArrayAdapter(NoteBookActivity.this, android.R.layout.simple_list_item_1, noteBooks);
+                        listView.setAdapter(arrayAdapter);
                     }
                 }).setNegativeButton("No", null)
                         .show();
