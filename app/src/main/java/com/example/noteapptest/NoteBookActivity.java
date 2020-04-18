@@ -53,7 +53,9 @@ public class NoteBookActivity extends AppCompatActivity {
     public static String saveNoteBooksPagesString = "notebook pages list";
     public static String saveNoteBooksPageTitleListString = "notebook page title string";
     public static String saveNoteBookPagePictures = "notebook pictures";
+    public static String saveLocations = "Save Locations";
     private static final int Access_Photos = 1;
+    private static int previousNotebook;
 
     private static final String[] LOCATION_PERMS={
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -63,26 +65,16 @@ public class NoteBookActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+//        clearData();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_book);
         this.setTitle("NoteBooks");
         verifyPermission();
 
-        Intent intent = getIntent();
-        double newLatitude = intent.getDoubleExtra("latitude", 181.0);
-        double newLongitude = intent.getDoubleExtra("longitude", 181.0);
-
-        if (newLatitude != 181.0 && newLongitude != 181.0)
-        {
-            Double[] newLoc = {newLatitude, newLongitude};
-            locations.add(newLoc);
-        }
-
         requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
         listView = findViewById(R.id.listView);
 
         loadData();
-//        noteBooks = new ArrayList<>();
 
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, noteBooks);
 
@@ -119,16 +111,16 @@ public class NoteBookActivity extends AppCompatActivity {
                 return true;
             }
         });
+
         GPSTracker tracker = new GPSTracker(getApplicationContext());
         ArrayList<String> tempNoteBooks = new ArrayList<>();
         ArrayList<ArrayList<String>> tempNotePageTitlesList = new ArrayList<>();
         ArrayList<ArrayList<String>> tempNotePages = new ArrayList<>();
         ArrayList<ArrayList<PageImageList>> tempNotePagesImages = new ArrayList<>();
         ArrayList<Double[]> tempLocs = new ArrayList<>();
-        int counter = 0;
-        for (String s : noteBooks)
+        for (int i = 0; i < noteBooks.size(); i++)
         {
-            if (!(locations.get(counter)[0] == 181.0))
+            if (locations.get(i)[0] != 181.0)
             {
                 if (tracker.location != null)
                 {
@@ -137,24 +129,23 @@ public class NoteBookActivity extends AppCompatActivity {
                     Double latitude = mLocation.getLatitude();
                     Double longitude = mLocation.getLongitude();
 
-                    if (distance(latitude,longitude,locations.get(counter)[0],locations.get(counter)[1]) <= 1)
+                    if (distance(latitude,longitude,locations.get(i)[0],locations.get(i)[1]) <= 1)
                     {
-                        tempNoteBooks.add(noteBooks.get(counter));
-                        tempNotePageTitlesList.add(noteBookPageTitlesList.get(counter));
-                        tempNotePages.add(noteBooksPages.get(counter));
-                        tempNotePagesImages.add(noteBookPagesImages.get(counter));
-                        tempLocs.add(locations.get(counter));
+                        tempNoteBooks.add(noteBooks.get(i));
+                        tempNotePageTitlesList.add(noteBookPageTitlesList.get(i));
+                        tempNotePages.add(noteBooksPages.get(i));
+                        tempNotePagesImages.add(noteBookPagesImages.get(i));
+                        tempLocs.add(locations.get(i));
 
 
-                        noteBooks.remove(counter);
-                        noteBookPageTitlesList.remove(counter);
-                        noteBooksPages.remove(counter);
-                        noteBookPagesImages.remove(counter);
-                        locations.remove(counter);
+                        noteBooks.remove(i);
+                        noteBookPageTitlesList.remove(i);
+                        noteBooksPages.remove(i);
+                        noteBookPagesImages.remove(i);
+                        locations.remove(i);
                         arrayAdapter.notifyDataSetChanged();
                         saveData();
 
-                        //Also part of the test.
                         noteBooks.add(0,tempNoteBooks.get(0));
                         noteBookPageTitlesList.add(0,tempNotePageTitlesList.get(0));
                         noteBooksPages.add(0,tempNotePages.get(0));
@@ -170,10 +161,52 @@ public class NoteBookActivity extends AppCompatActivity {
 
                     }
                 }
-            }
-            counter++;
+                else
+                {
+                    Double latitude = 0.0;
+                    Double longitude = 0.0;
 
+                    if (distance(latitude,longitude,locations.get(i)[0],locations.get(i)[1]) <= 1)
+                    {
+                        tempNoteBooks.add(noteBooks.get(i));
+                        tempNotePageTitlesList.add(noteBookPageTitlesList.get(i));
+                        tempNotePages.add(noteBooksPages.get(i));
+                        tempNotePagesImages.add(noteBookPagesImages.get(i));
+                        tempLocs.add(locations.get(i));
+
+                        noteBooks.remove(i);
+                        noteBookPageTitlesList.remove(i);
+                        noteBooksPages.remove(i);
+                        noteBookPagesImages.remove(i);
+                        locations.remove(i);
+                        arrayAdapter.notifyDataSetChanged();
+//                        saveData();
+
+                        noteBooks.add(0, tempNoteBooks.get(0));
+                        noteBookPageTitlesList.add(0, tempNotePageTitlesList.get(0));
+                        noteBooksPages.add(0, tempNotePages.get(0));
+                        noteBookPagesImages.add(0, tempNotePagesImages.get(0));
+                        locations.add(0, tempLocs.get(0));
+                        arrayAdapter.notifyDataSetChanged();
+                        saveData();
+                        tempNoteBooks.clear();
+                        tempNotePages.clear();
+                        tempNotePagesImages.clear();
+                        tempNotePageTitlesList.clear();
+                        tempLocs.clear();
+
+                        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        Gson gson = new Gson();
+                        String json = gson.toJson(NoteBookActivity.locations);
+                        editor.putString(NoteBookActivity.saveLocations, json);
+
+                        editor.apply();
+                    }
+                }
+            }
         }
+        arrayAdapter.notifyDataSetChanged();
     }
 
     private static double distance(double lat1, double lon1, double lat2, double lon2) {
@@ -202,10 +235,13 @@ public class NoteBookActivity extends AppCompatActivity {
         switch (item.getItemId())
         {
             case R.id.Add_NoteBook:
+                Double[] temp = new Double[2];
+                temp[0] = 181.0;
+                temp[1] = 181.0;
+                locations.add(temp);
+
                 Intent intent = new Intent(getApplicationContext(), NoteBookPages.class);
                 startActivity(intent);
-                Double[] temp = {181.0,181.0};
-                locations.add(temp);
                 saveData();
                 return true;
             case R.id.Delete_Notebooks:
@@ -231,6 +267,7 @@ public class NoteBookActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         Gson gson = new Gson();
         String json = gson.toJson(noteBooks);
+
         editor.putString(saveNoteBooksString,json);
 
         editor.apply();
@@ -272,6 +309,15 @@ public class NoteBookActivity extends AppCompatActivity {
         if(noteBookPagesImages == null)
         {
             noteBookPagesImages = new ArrayList<>();
+        }
+
+        gson = new Gson();
+        json = sharedPreferences.getString(saveLocations, null);
+        type = new TypeToken<ArrayList<Double []>>(){}.getType();
+        locations = gson.fromJson(json, type);
+        if(locations == null)
+        {
+            locations = new ArrayList<>();
         }
     }
 
