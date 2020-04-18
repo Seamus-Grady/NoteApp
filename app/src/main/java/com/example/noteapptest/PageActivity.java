@@ -475,6 +475,12 @@ public class PageActivity extends AppCompatActivity {
         return cursor.getInt(0);
     }
 
+    @Override
+    protected void onPause() {
+        saveData();
+        super.onPause();
+    }
+
     /**
      * Rotates and shrinks as needed
      */
@@ -547,6 +553,34 @@ public class PageActivity extends AppCompatActivity {
         SpannableString ss = new SpannableString(Html.fromHtml(s));
 
         editText.setText(ss);
+    }
+
+    private void saveData()
+    {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(NoteBookActivity.noteBooks);
+        editor.putString(NoteBookActivity.saveNoteBooksString,json);
+
+
+        gson = new Gson();
+        json = gson.toJson(NoteBookActivity.noteBooksPages);
+        editor.putString(NoteBookActivity.saveNoteBooksPagesString, json);
+
+        gson = new Gson();
+        json = gson.toJson(NoteBookActivity.noteBookPageTitlesList);
+        editor.putString(NoteBookActivity.saveNoteBooksPageTitleListString, json);
+
+        gson = new Gson();
+        json = gson.toJson(NoteBookActivity.noteBookPagesImages);
+        editor.putString(NoteBookActivity.saveNoteBookPagePictures, json);
+
+        gson = new Gson();
+        json = gson.toJson(NoteBookActivity.locations);
+        editor.putString(NoteBookActivity.saveLocations, json);
+
+        editor.apply();
     }
 
 }

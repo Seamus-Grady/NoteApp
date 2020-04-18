@@ -82,6 +82,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         notebookID = intent.getIntExtra("notebookID", -1);
 
         gpsTracker = new GPSTracker(getApplicationContext());
+        gpsTracker.getLocation();
         if (gpsTracker.location == null)
         {
             requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);

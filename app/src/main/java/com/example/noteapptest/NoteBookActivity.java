@@ -65,12 +65,11 @@ public class NoteBookActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        clearData();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_book);
         this.setTitle("NoteBooks");
         verifyPermission();
-
         requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
         listView = findViewById(R.id.listView);
 
@@ -111,8 +110,12 @@ public class NoteBookActivity extends AppCompatActivity {
                 return true;
             }
         });
+        setUP();
+    }
 
+    private void setUP(){
         GPSTracker tracker = new GPSTracker(getApplicationContext());
+        tracker.getLocation();
         ArrayList<String> tempNoteBooks = new ArrayList<>();
         ArrayList<ArrayList<String>> tempNotePageTitlesList = new ArrayList<>();
         ArrayList<ArrayList<String>> tempNotePages = new ArrayList<>();
@@ -207,6 +210,12 @@ public class NoteBookActivity extends AppCompatActivity {
             }
         }
         arrayAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onResume() {
+        setUP();
+        super.onResume();
     }
 
     private static double distance(double lat1, double lon1, double lat2, double lon2) {

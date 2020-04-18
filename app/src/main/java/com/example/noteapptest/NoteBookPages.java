@@ -179,6 +179,7 @@ public class NoteBookPages extends AppCompatActivity {
                             public void onClick(DialogInterface dialog, int which) {
                                 NoteBookPages.noteBookPageTitles.remove(position);
                                 imagesForPage.remove(position);
+                                noteBookPages.remove(position);
                                 arrayAdapter.notifyDataSetChanged();
                                 saveData();
                                 settingsDialog.hide();
@@ -284,6 +285,12 @@ public class NoteBookPages extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        saveData();
+        super.onPause();
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("noteBookID", noteBookID);
@@ -362,12 +369,6 @@ public class NoteBookPages extends AppCompatActivity {
                     //saveData();
                 }
                 else {
-//                    if (NoteBookActivity.noteBooksPages.size()-1  != noteBookID || noteBookID == -1) {
-//                        NoteBookActivity.noteBooksPages.add(noteBookPages);
-//                        NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
-//                        NoteBookActivity.arrayAdapter.notifyDataSetChanged();
-//                    }
-//                    else {
                         NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
                         NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
                         NoteBookActivity.noteBookPagesImages.set(noteBookID, imagesForPage);
@@ -484,6 +485,27 @@ public class NoteBookPages extends AppCompatActivity {
                 saveData();
                 return true;
             case R.id.Add_Location:
+                this.setTitle(editText.getText().toString());
+                if(noteBookID == -1)
+                {
+                    NoteBookActivity.noteBooks.add(editText.getText().toString());
+                    NoteBookActivity.noteBooksPages.add(noteBookPages);
+                    NoteBookActivity.noteBookPageTitlesList.add(noteBookPageTitles);
+                    NoteBookActivity.noteBookPagesImages.add(imagesForPage);
+                    NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                    noteBookID = NoteBookActivity.noteBooksPages.size()-1;
+                }
+                else
+                {
+                    NoteBookActivity.noteBooks.set(noteBookID ,editText.getText().toString());
+                    NoteBookActivity.noteBooksPages.set(noteBookID, noteBookPages);
+                    NoteBookActivity.noteBookPageTitlesList.set(noteBookID, noteBookPageTitles);
+                    NoteBookActivity.noteBookPagesImages.set(noteBookID, imagesForPage);
+                    NoteBookActivity.arrayAdapter.notifyDataSetChanged();
+                }
+                defaultState = false;
+                defaultTitle = editText.getText().toString();
+                saveData();
                 if (NoteBookActivity.locations.get(noteBookID)[0] == 181.0)
                 {
                     new AlertDialog.Builder(NoteBookPages.this)
