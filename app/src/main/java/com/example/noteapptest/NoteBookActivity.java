@@ -162,6 +162,13 @@ public class NoteBookActivity extends AppCompatActivity {
                         tempNotePageTitlesList.clear();
                         tempLocs.clear();
 
+                        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        Gson gson = new Gson();
+                        String json = gson.toJson(NoteBookActivity.locations);
+                        editor.putString(NoteBookActivity.saveLocations, json);
+
+                        editor.apply();
                     }
                 }
                 else
@@ -218,7 +225,7 @@ public class NoteBookActivity extends AppCompatActivity {
         super.onResume();
     }
 
-    private static double distance(double lat1, double lon1, double lat2, double lon2) {
+    public static double distance(double lat1, double lon1, double lat2, double lon2) {
         if ((lat1 == lat2) && (lon1 == lon2)) {
             return 0;
         }

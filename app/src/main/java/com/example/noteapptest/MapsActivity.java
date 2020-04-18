@@ -83,6 +83,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         gpsTracker = new GPSTracker(getApplicationContext());
         gpsTracker.getLocation();
+
         if (gpsTracker.location == null)
         {
             requestPermissions(LOCATION_PERMS,LOCATION_REQUEST);
