@@ -65,7 +65,7 @@ public class NoteBookActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-//        clearData();
+        clearData();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note_book);
         this.setTitle("NoteBooks");
