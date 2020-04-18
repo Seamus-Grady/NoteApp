@@ -35,6 +35,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.text.style.AbsoluteSizeSpan;
+import android.text.style.CharacterStyle;
 import android.text.style.ImageSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
@@ -244,6 +245,8 @@ public class PageActivity extends AppCompatActivity {
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        // TODO: REMOVE THIS AFTER TESTING
+                        Test();
                         dialog.cancel();
                     }
                 });
@@ -536,5 +539,14 @@ public class PageActivity extends AppCompatActivity {
         return srcBitmap;
     }
 
+
+    private void Test()
+    {
+        String s = Html.toHtml(editText.getText());
+
+        SpannableString ss = new SpannableString(Html.fromHtml(s));
+
+        editText.setText(ss);
+    }
 
 }

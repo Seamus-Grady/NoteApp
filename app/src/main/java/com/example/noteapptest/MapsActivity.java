@@ -8,6 +8,7 @@ import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.gson.Gson;
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -34,6 +36,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             Manifest.permission.ACCESS_FINE_LOCATION
     };
     private static final int LOCATION_REQUEST=1340;
+    public static int notebookID;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -48,10 +51,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         {
             case R.id.Add_Location:
 
-                Intent intent = new Intent(getApplicationContext(), NoteBookPages.class);
-                intent.putExtra("latitude", latitude);
-                intent.putExtra("longitude", longitude);
-                startActivity(intent);
+//                Intent intent = new Intent(getApplicationContext(), NoteBookActivity.class);
+//                intent.putExtra("latitude", latitude);
+//                intent.putExtra("longitude", longitude);
+//                intent.putExtra("notebookID", notebookID);
+//                saveData();
+//                startActivity(intent);
+//                finish();
+//                return true;
+
+//                Intent intent = new Intent(getApplicationContext(), NoteBookPages.class);
+//                intent.putExtra("latitude", latitude);
+//                intent.putExtra("longitude", longitude);
+//                intent.putExtra("notebookID", notebookID);
+
+                saveData();
                 finish();
                 return true;
             default:
@@ -63,6 +77,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        Intent intent = getIntent();
+        notebookID = intent.getIntExtra("notebookID", -1);
 
         gpsTracker = new GPSTracker(getApplicationContext());
         if (gpsTracker.location == null)
@@ -131,6 +148,19 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng sydney = new LatLng(latitude, longitude);
         mMap.addMarker(new MarkerOptions().position(sydney).title("I'm here..."));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
+    private void saveData()
+    {
+        SharedPreferences sharedPreferences = getSharedPreferences("shared preferences",MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        Double[] newLoc = {latitude, longitude};
+        NoteBookActivity.locations.set(notebookID, newLoc);
+        String json = gson.toJson(NoteBookActivity.locations);
+        editor.putString(NoteBookActivity.saveLocations, json);
+
+        editor.apply();
     }
 
 

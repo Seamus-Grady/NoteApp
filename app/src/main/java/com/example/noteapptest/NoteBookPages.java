@@ -14,6 +14,7 @@ import android.text.InputType;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -26,6 +27,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -114,6 +116,35 @@ public class NoteBookPages extends AppCompatActivity {
                 Button changeTitle = new Button(NoteBookPages.this);
                 changeTitle.setText("Change Title");
 
+                changeTitle.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+
+                        AlertDialog.Builder builder = new AlertDialog.Builder(NoteBookPages.this);
+                        builder.setTitle("New Page Name");
+
+                        final EditText input = new EditText(NoteBookPages.this);
+                        input.setInputType(InputType.TYPE_CLASS_TEXT);
+                        builder.setView(input);
+
+                        builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                NoteBookPages.noteBookPageTitles.set(position, input.getText().toString());
+                                arrayAdapter.notifyDataSetChanged();
+                            }
+                        });
+
+                        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+                        builder.show();
+
+
+                    }
+                });
 
                 etLayout.addView(changeTitle);
 
@@ -190,6 +221,7 @@ public class NoteBookPages extends AppCompatActivity {
                             }
                         });
                         builder.show();
+
 
 
                     }
@@ -452,16 +484,39 @@ public class NoteBookPages extends AppCompatActivity {
                 saveData();
                 return true;
             case R.id.Add_Location:
-                new AlertDialog.Builder(NoteBookPages.this)
-                        .setIcon(android.R.drawable.ic_dialog_alert).setTitle("Tag a new location")
-                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
-                                startActivity(intent);
-                            }
-                        }).setNegativeButton("No", null)
-                        .show();
+                if (NoteBookActivity.locations.get(noteBookID)[0] == 181.0)
+                {
+                    new AlertDialog.Builder(NoteBookPages.this)
+                            .setTitle("No existing tag found!")
+                            .setMessage("Do you want to tag a new location?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                                    intent.putExtra("notebookID", noteBookID);
+                                    startActivity(intent);
+                                }
+                            }).setNegativeButton("No", null)
+                            .show();
+                }
+                else
+                {
+                    new AlertDialog.Builder(NoteBookPages.this)
+                            .setTitle("Existing tag found!")
+                            .setMessage("Current tag:\nLatitude: " + NoteBookActivity.locations.get(noteBookID)[0] +
+                                    "\nLongitude: " + NoteBookActivity.locations.get(noteBookID)[1] +
+                                    "\nDo you want to replace this tag?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                                    intent.putExtra("notebookID", noteBookID);
+                                    startActivity(intent);
+                                }
+                            }).setNegativeButton("No", null)
+                            .show();
+                }
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -501,6 +556,10 @@ public class NoteBookPages extends AppCompatActivity {
         gson = new Gson();
         json = gson.toJson(NoteBookActivity.noteBookPagesImages);
         editor.putString(NoteBookActivity.saveNoteBookPagePictures, json);
+
+        gson = new Gson();
+        json = gson.toJson(NoteBookActivity.locations);
+        editor.putString(NoteBookActivity.saveLocations, json);
 
         editor.apply();
     }
